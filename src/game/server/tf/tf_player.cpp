@@ -5,7 +5,6 @@
 // $NoKeywords: $
 //=============================================================================
 
-
 #include "cbase.h"
 #include "tf_player.h"
 #include "tf_gamemode_1v1.h"
@@ -133,6 +132,7 @@
 #include "tf_weapon_bonesaw.h"
 #include "pointhurt.h"
 #include "info_camera_link.h"
+#include "tf_player_stats.h"
 
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
@@ -13487,6 +13487,8 @@ void CTFPlayer::SetIsCoaching( bool bIsCoaching )
 // Called when the player disconnects from the server.
 void CTFPlayer::TeamFortress_ClientDisconnected( void )
 {
+	g_PlayerStatsManager.OnPlayerDisconnect(this);
+
 	RemoveAllOwnedEntitiesFromWorld( true );
 	RemoveNemesisRelationships();
 

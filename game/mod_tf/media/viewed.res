@@ -14,7 +14,7 @@
 	}
 	"sandbox"
 	{
-		"viewed"		"40"
+		"viewed"		"42"
 	}
 	"pvp_flatarena"
 	{

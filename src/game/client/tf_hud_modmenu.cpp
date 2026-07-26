@@ -7,6 +7,7 @@
 #include "iclientmode.h"
 #include <vgui/IScheme.h>
 #include <vgui_controls/Controls.h>
+#include "tf_playerstats_client.h"
 
 using namespace vgui;
 
@@ -53,6 +54,10 @@ CTFModMenu::CTFModMenu(vgui::Panel* parent) : BaseClass(parent, "TFModMenu")
 	m_pTabHudBtn->SetPos(190, 30);
 	m_pTabHudBtn->SetSize(170, 24);
 
+	m_pTabStatsBtn = new Button(this, "TabStatsBtn", "Stats", this, "tab_stats");
+	m_pTabStatsBtn->SetPos(250, 30);
+	m_pTabStatsBtn->SetSize(115, 24);
+
 	// --- Pages ---
 	m_pMovementPage = new Panel(this, "MovementPage");
 	m_pMovementPage->SetPos(10, 65);
@@ -61,6 +66,22 @@ CTFModMenu::CTFModMenu(vgui::Panel* parent) : BaseClass(parent, "TFModMenu")
 	m_pHudPage = new Panel(this, "HudPage");
 	m_pHudPage->SetPos(10, 65);
 	m_pHudPage->SetSize(360, 440);
+
+	m_pStatsPage = new Panel(this, "StatsPage");
+	m_pStatsPage->SetPos(10, 65);
+	m_pStatsPage->SetSize(360, 440);
+
+	m_pStatsTimeLabel = new Label(m_pStatsPage, "StatsTimeLabel", "Time Played: --:--:--");
+	m_pStatsTimeLabel->SetPos(10, 10);
+	m_pStatsTimeLabel->SetSize(340, 24);
+
+	m_pStatsWinsLabel = new Label(m_pStatsPage, "StatsWinsLabel", "1v1 Wins: -");
+	m_pStatsWinsLabel->SetPos(10, 40);
+	m_pStatsWinsLabel->SetSize(340, 24);
+
+	m_pStatsKillsLabel = new Label(m_pStatsPage, "StatsKillsLabel", "Total Kills: -");
+	m_pStatsKillsLabel->SetPos(10, 70);
+	m_pStatsKillsLabel->SetSize(340, 24);
 
 	// ==========================================
 	// ----------- SPEEDOMETER SECTION -----------
@@ -327,16 +348,22 @@ void CTFModMenu::PerformLayout()
 
 	int pageWide = wide - 20;
 	int pageTall = tall - 75;
+	int tabWide = (pageWide / 3) - 5;
 
-	m_pTabMovementBtn->SetSize((pageWide / 2) - 5, 24);
-	m_pTabHudBtn->SetPos(10 + (pageWide / 2) + 5, 30);
-	m_pTabHudBtn->SetSize((pageWide / 2) - 5, 24);
+	m_pTabMovementBtn->SetSize(tabWide, 24);
+	m_pTabHudBtn->SetPos(10 + tabWide + 5, 30);
+	m_pTabHudBtn->SetSize(tabWide, 24);
+	m_pTabStatsBtn->SetPos(10 + (tabWide + 5) * 2, 30);
+	m_pTabStatsBtn->SetSize(tabWide, 24);
 
 	m_pMovementPage->SetPos(10, 65);
 	m_pMovementPage->SetSize(pageWide, pageTall);
 
 	m_pHudPage->SetPos(10, 65);
 	m_pHudPage->SetSize(pageWide, pageTall);
+
+	m_pStatsPage->SetPos(10, 65);
+	m_pStatsPage->SetSize(pageWide, pageTall);
 }
 
 void CTFModMenu::SwitchTab(int tabIndex)
@@ -344,6 +371,12 @@ void CTFModMenu::SwitchTab(int tabIndex)
 	m_iActiveTab = tabIndex;
 	m_pMovementPage->SetVisible(tabIndex == 0);
 	m_pHudPage->SetVisible(tabIndex == 1);
+	m_pStatsPage->SetVisible(tabIndex == 2);
+
+	if (tabIndex == 2)
+	{
+		engine->ClientCmd("stats"); // demande de stats au serveur
+	}
 }
 
 void CTFModMenu::OnCommand(const char* command)
@@ -358,9 +391,43 @@ void CTFModMenu::OnCommand(const char* command)
 		SwitchTab(1);
 		return;
 	}
+	else if (!Q_stricmp(command, "tab_stats"))
+	{
+		SwitchTab(2);
+		return;
+	}
 
 	BaseClass::OnCommand(command);
 }
+
+void CTFModMenu::UpdateStatsDisplay()
+{
+	int iSeconds = GetClientStat_SecondsPlayed();
+	int iHours = iSeconds / 3600;
+	int iMinutes = (iSeconds % 3600) / 60;
+	int iSecs = iSeconds % 60;
+
+	char szBuf[64];
+	Q_snprintf(szBuf, sizeof(szBuf), "Time Played: %d:%02d:%02d", iHours, iMinutes, iSecs);
+	m_pStatsTimeLabel->SetText(szBuf);
+
+	Q_snprintf(szBuf, sizeof(szBuf), "1v1 Wins: %d", GetClientStat_OneVOneWins());
+	m_pStatsWinsLabel->SetText(szBuf);
+
+	Q_snprintf(szBuf, sizeof(szBuf), "Total Kills: %d", GetClientStat_TotalKills());
+	m_pStatsKillsLabel->SetText(szBuf);
+}
+
+void CTFModMenu::OnThink()
+{
+	BaseClass::OnThink();
+
+	if (m_iActiveTab == 2)
+	{
+		UpdateStatsDisplay();
+	}
+}
+
 
 CON_COMMAND(togglemodmenu, "Toggle the custom mod menu")
 {

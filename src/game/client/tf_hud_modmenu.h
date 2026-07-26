@@ -68,6 +68,16 @@ public:
 	vgui::Label* m_pFPSXLabel;
 	vgui::Label* m_pFPSYLabel;
 
+	// --- STATS ---
+	vgui::Button* m_pTabStatsBtn;
+	vgui::Panel* m_pStatsPage;
+	vgui::Label* m_pStatsTimeLabel;
+	vgui::Label* m_pStatsWinsLabel;
+	vgui::Label* m_pStatsKillsLabel;
+
+	virtual void OnThink() OVERRIDE;
+	void UpdateStatsDisplay();
+
 	// --- TABS & PAGES ---
 	vgui::Button* m_pTabMovementBtn;
 	vgui::Button* m_pTabHudBtn;

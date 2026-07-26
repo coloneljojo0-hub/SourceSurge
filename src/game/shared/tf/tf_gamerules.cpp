@@ -19,6 +19,7 @@
 #include "tf_logic_player_destruction.h"
 #include "tf_matchmaking_shared.h"
 #include "tf_progression_description.h"
+#include "tf_player_stats.h"
 
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
@@ -11684,6 +11685,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	// credit for kill-eating weapons and anything else that might care
 	if ( pTFPlayerScorer && pTFPlayerVictim && pTFPlayerScorer != pTFPlayerVictim )
 	{
+		g_PlayerStatsManager.AddKill(pTFPlayerScorer); //for stats
 		// Increment the server-side kill count for this weapon -- this is used for honorbound
 		// weapons and has nothing to do with strange weapons/stats.
 		pTFPlayerScorer->IncrementKillCountSinceLastDeploy( info );

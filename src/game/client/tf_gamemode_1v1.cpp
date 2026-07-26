@@ -5,6 +5,7 @@
 #include "tf_gamemode_1v1.h"
 #include "tf_player.h"
 #include "gamerules.h"
+#include "tf_player_stats.h"
 
 ConVar sm_1v1_enabled("sm_1v1_enabled", "0", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Toggles 1v1 Mode active state.");
 ConVar sm_1v1_score_limit("sm_1v1_score_limit", "20", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Score limit required to win 1v1 mode.");
@@ -249,6 +250,7 @@ void C1v1Gamemode::EndMatch(CBasePlayer* pWinner)
 {
     if (pWinner)
     {
+        g_PlayerStatsManager.AddOneVOneWin(pWinner); 
         char szWinCenter[128];
         Q_snprintf(szWinCenter, sizeof(szWinCenter), "WINNER!\n%s wins the 1v1 duel!", pWinner->GetPlayerName());
         UTIL_ClientPrintAll(HUD_PRINTCENTER, szWinCenter);

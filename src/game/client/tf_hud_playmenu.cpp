@@ -194,7 +194,7 @@ void CTFPlayMenu::PerformLayout()
 	int pMargin = 12;
 	int pWide = contentWide - (pMargin * 2);
 
-	// --- SINGLEPLAYER LAYOUT ---
+	//SINGLEPLAYER LAYOUT
 	m_pSPMapLabel->SetBounds(pMargin, 12, pWide, 18);
 	m_pSPMapCombo->SetBounds(pMargin, 30, pWide, 24);
 
@@ -203,7 +203,7 @@ void CTFPlayMenu::PerformLayout()
 
 	m_pSPPlayButton->SetBounds(pMargin, pageTall - 48, pWide, 36);
 
-	// --- CO-OP LAYOUT ---
+	//CO-OP LAYOUT
 	m_pCoopMapLabel->SetBounds(pMargin, 8, pWide, 16);
 	m_pCoopMapCombo->SetBounds(pMargin, 24, pWide, 22);
 
