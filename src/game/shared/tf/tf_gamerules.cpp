@@ -127,6 +127,7 @@
 	#include "tf_party.h"
 	#include "tf_autobalance.h"
 	#include "player_voice_listener.h"
+	#include "tf_gamemode_1v1.h"
 #endif
 
 #include "tf_mann_vs_machine_stats.h"
@@ -9390,6 +9391,9 @@ void CTFGameRules::RunPlayerConditionThink ( void )
 void CTFGameRules::FrameUpdatePostEntityThink()
 {
 	BaseClass::FrameUpdatePostEntityThink();
+
+	// Update 1v1 mode logic (countdown timers, player presence, etc.)
+	g_1v1Gamemode.Update();
 
 	RunPlayerConditionThink();
 }
