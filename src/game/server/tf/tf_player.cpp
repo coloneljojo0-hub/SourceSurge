@@ -2820,7 +2820,15 @@ void CTFPlayer::PostThink()
 		if (bIsSlamCapable && !m_bSlamArmed && (gpGlobals->curtime - m_flAirborneStartTime >= 1.0f) && (m_nButtons & IN_DUCK))
 		{
 			m_bSlamArmed = true;
-			EmitSound("Weapon_Mantreads.Impact"); // placeholder "armed" cue, swap for a proper sound/particle later if you want
+
+			Vector vecVelocity = GetAbsVelocity(); //arrache la speed et la divise par 2
+			vecVelocity.x *= 0.5f;
+			vecVelocity.y *= 0.5f;
+			vecVelocity.z = -650.0f; 
+
+			SetAbsVelocity(vecVelocity);
+
+			EmitSound("Weapon_Mantreads.Impact"); //a changer pour metre particules et bruit de slam
 		}
 	}
 	else

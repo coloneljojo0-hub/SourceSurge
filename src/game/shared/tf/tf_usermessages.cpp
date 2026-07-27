@@ -60,6 +60,8 @@ void RegisterUserMessages()
 
 	usermessages->Register( "UpdateAchievement", -1 );
 	
+	usermessages->Register( "PlayerStats", -1);
+	
 //=============================================================================
 // HPE_BEGIN:
 // [msmith]	Training Messages
