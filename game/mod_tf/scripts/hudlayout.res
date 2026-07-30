@@ -1532,6 +1532,19 @@
 		"visible"		"1"
 		"enabled"		"1"
 	}
+	
+	"HudWave2Status"
+	{
+	"ControlName"	"CHudWave2Status"
+	"fieldName"		"HudWave2Status"
+	"xpos"			"0"
+	"ypos"			"0"
+	"wide"			"400"
+	"tall"			"100"
+	"visible"		"1"
+	"enabled"		"1"
+	}
+
 }
 
 

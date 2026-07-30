@@ -62,7 +62,7 @@ void CHudWave2Status::PerformLayout()
 
 	int panelWide = 400;
 	int panelTall = 100;
-	SetPos( ( screenWide - panelWide ) / 2, 20 ); // top-center
+	SetPos( ( screenWide - panelWide ) / 2, 50 ); //peut etre a changer 
 	SetSize( panelWide, panelTall );
 
 	m_pWaveLabel->SetBounds( 0, 0, panelWide, 24 );
@@ -79,12 +79,12 @@ bool CHudWave2Status::ShouldDraw()
 	return CHudElement::ShouldDraw();
 }
 
-void CHudWave2Status::OnTick()
+void CHudWave2Status::OnThink()
 {
-	if ( !TFGameRules() )
+	if (!TFGameRules())
 		return;
 
-	char buf[128];
+		char buf[128];
 
 	V_snprintf( buf, sizeof(buf), "WAVE %d", TFGameRules()->Wave2_GetCurrentWaveForHUD() );
 	m_pWaveLabel->SetText( buf );
@@ -107,7 +107,7 @@ void CHudWave2Status::OnTick()
 		switch ( nBuff )
 		{
 			case 0: pszBuffText = "Enemies gained MORE HEALTH"; break;
-			case 1: pszBuffText = "Enemies gained MORE DAMAGE"; break;
+			case 1: pszBuffText = "Enemies now DEAL MORE DAMAGE"; break;
 			case 2: pszBuffText = "Enemies gained MORE RESISTANCE"; break;
 			default: pszBuffText = ""; break;
 		}

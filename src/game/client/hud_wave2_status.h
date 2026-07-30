@@ -18,7 +18,7 @@ public:
 
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	virtual void PerformLayout();
-	virtual void OnTick();
+	virtual void OnThink();
 	virtual bool ShouldDraw();
 
 private:

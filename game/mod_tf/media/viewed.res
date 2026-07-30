@@ -30,6 +30,6 @@
 	}
 	"surge_sandbox"
 	{
-		"viewed"		"1"
+		"viewed"		"4"
 	}
 }
