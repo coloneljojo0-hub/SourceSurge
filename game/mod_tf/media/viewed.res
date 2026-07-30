@@ -24,4 +24,12 @@
 	{
 		"viewed"		"1"
 	}
+	"koth_toxic"
+	{
+		"viewed"		"1"
+	}
+	"surge_sandbox"
+	{
+		"viewed"		"1"
+	}
 }

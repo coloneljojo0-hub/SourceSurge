@@ -1058,8 +1058,6 @@ private:
 
 	bool	m_bWave2Active;
 	int		m_nWave2Difficulty;			// 0=hard, 1=harder, 2=hardest
-	int		m_nWave2CurrentWave;
-	int		m_nWave2BotsAliveCount;
 	bool	m_bWave2InCooldown;
 	float	m_flWave2CooldownEndTime;
 	float	m_flWave2NextAmmoRefillTime;
@@ -1072,10 +1070,10 @@ private:
 
 public:
 	bool	m_bWavesEnabled;
+	bool	Wave2_IsActive(void) const { return m_bWave2Active; }
 	void	Wave2_Start(int nDifficulty);
 	void	Wave2_Stop(void);
 	void	Wave2_Think(void);
-	bool	Wave2_IsActive(void) const { return m_bWave2Active; }
 	bool	Wave2_IsWaveBot(CBaseEntity* pEntity) const;
 	float	Wave2_GetDamageDealtMult(void) const { return m_flWave2DamageMult; }
 	float	Wave2_GetDamageTakenMult(void) const { return m_flWave2ResistMult; }
@@ -1233,6 +1231,22 @@ private:
 	CNetworkVar( float, m_flGravityMultiplier );
 	CNetworkVar( int, m_nMatchGroupType );
 	CNetworkVar( bool, m_bMatchEnded );
+	
+	//waves stuff
+	CNetworkVar(int, m_nWave2CurrentWave);
+	CNetworkVar(int, m_nWave2BotsAliveCount);
+	CNetworkVar(bool, m_bWave2Active_Net);		// separate net copy, since m_bWave2Active is GAME_DLL only
+	CNetworkVar(bool, m_bWave2InCooldown_Net);
+	CNetworkVar(float, m_flWave2CooldownEndTime_Net);
+	CNetworkVar(int, m_nWave2LastBuffType);		// -1 = none yet, 0 = health, 1 = damage, 2 = resist
+
+	public:
+		int		Wave2_GetCurrentWaveForHUD(void) const { return m_nWave2CurrentWave; } 
+		int		Wave2_GetBotsAliveForHUD(void) const { return m_nWave2BotsAliveCount; }
+		bool	Wave2_IsInCooldownForHUD(void) const { return m_bWave2InCooldown_Net; }
+		bool	Wave2_IsActiveForHUD(void) const { return m_bWave2Active_Net; }
+		float	Wave2_GetCooldownEndTimeForHUD(void) const { return m_flWave2CooldownEndTime_Net; }
+		int		Wave2_GetLastBuffTypeForHUD(void) const { return m_nWave2LastBuffType; }
 
 	// This is used to check if players are in hell. The name doesn't make sense because we thought this would only be used for Halloween 2013
 	// cannot change the name because it's network var which will break demo

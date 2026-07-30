@@ -1419,6 +1419,14 @@ void RecvProxy_NewMapVoteStateChanged( const CRecvProxyData *pData, void *pStruc
 BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #ifdef CLIENT_DLL
 
+	//more wave stuff i guess :)
+	RecvPropInt(RECVINFO(m_nWave2CurrentWave)),
+	RecvPropInt(RECVINFO(m_nWave2BotsAliveCount)),
+	RecvPropBool(RECVINFO(m_bWave2Active_Net)),
+	RecvPropBool(RECVINFO(m_bWave2InCooldown_Net)),
+	RecvPropTime(RECVINFO(m_flWave2CooldownEndTime_Net)),
+	RecvPropInt(RECVINFO(m_nWave2LastBuffType)),
+
 	RecvPropInt( RECVINFO( m_nGameType ) ),
 	RecvPropInt( RECVINFO( m_nStopWatchState ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
@@ -1494,6 +1502,14 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
 	SendPropTime( SENDINFO( m_flCapturePointEnableTime ) ),
+
+	//EVEN MOREE WAVE STUFF
+	SendPropInt(SENDINFO(m_nWave2CurrentWave)),
+	SendPropInt(SENDINFO(m_nWave2BotsAliveCount)),
+	SendPropBool(SENDINFO(m_bWave2Active_Net)),
+	SendPropBool(SENDINFO(m_bWave2InCooldown_Net)),
+	SendPropTime(SENDINFO(m_flWave2CooldownEndTime_Net)),
+	SendPropInt(SENDINFO(m_nWave2LastBuffType)),
 
 //=============================================================================
 // HPE_BEGIN:
@@ -3455,6 +3471,13 @@ CTFGameRules::CTFGameRules()
 	m_flWave2HealthMult = 1.0f;
 	m_flWave2DamageMult = 1.0f;
 	m_flWave2ResistMult = 1.0f;
+	m_nWave2CurrentWave.Set(0);
+
+	m_nWave2BotsAliveCount.Set(0);
+	m_bWave2Active_Net.Set(false);
+	m_bWave2InCooldown_Net.Set(false);
+	m_flWave2CooldownEndTime_Net.Set(0.0f);
+	m_nWave2LastBuffType.Set(-1);
 
 #else // GAME_DLL
 
@@ -22684,6 +22707,7 @@ CON_COMMAND_F(tf_wave2_stop, "Stop the wave 2 bot system and clean up all wave b
 void CTFGameRules::Wave2_Start(int nDifficulty)
 {
 	m_bWave2Active = true;
+	m_bWave2Active_Net.Set(true);
 	m_nWave2Difficulty = nDifficulty;
 	m_nWave2CurrentWave = 0;
 	m_bWave2InCooldown = false;
@@ -22700,6 +22724,8 @@ void CTFGameRules::Wave2_Stop(void)
 {
 	m_bWave2Active = false;
 	m_bWave2InCooldown = false;
+	m_nWave2CurrentWave.Set(0);
+	m_nWave2BotsAliveCount.Set(0);
 
 	FOR_EACH_VEC(m_hWave2Bots, i)
 	{
@@ -22755,8 +22781,9 @@ void CTFGameRules::Wave2_ApplyBuffsToBot(CTFBot* pBot)
 
 void CTFGameRules::Wave2_SpawnWave(void)
 {
-	m_nWave2CurrentWave++;
+	m_nWave2CurrentWave.Set(m_nWave2CurrentWave + 1);
 	m_bWave2InCooldown = false;
+	m_bWave2InCooldown_Net.Set(false);
 
 	// Clean up last wave's (dead) bots before making new ones
 	FOR_EACH_VEC(m_hWave2Bots, i)
@@ -22771,10 +22798,20 @@ void CTFGameRules::Wave2_SpawnWave(void)
 
 	int nSnipers, nSpies;
 	Wave2_GetCompositionForWave(m_nWave2CurrentWave, nSnipers, nSpies);
-
-	CBasePlayer* pHost = UTIL_GetListenServerHost();
 	int nTotalBots = nSnipers + nSpies;
-	m_nWave2BotsAliveCount = nTotalBots;
+	m_nWave2BotsAliveCount.Set(nTotalBots);
+
+	// Find the RED player to spawn bots near
+	CTFPlayer* pHost = NULL;
+	for (int iPlayer = 1; iPlayer <= gpGlobals->maxClients; iPlayer++)
+	{
+		CTFPlayer* pCandidate = ToTFPlayer(UTIL_PlayerByIndex(iPlayer));
+		if (pCandidate && pCandidate->IsConnected() && pCandidate->GetTeamNumber() == TF_TEAM_RED)
+		{
+			pHost = pCandidate;
+			break;
+		}
+	}
 
 	// AI aggression scales a little with our difficulty setting too
 	CTFBot::DifficultyType eBotSkill = CTFBot::NORMAL;
@@ -22860,6 +22897,7 @@ void CTFGameRules::Wave2_RollBuff(void)
 	else if (m_nWave2Difficulty == 2) flScale = 2.0f;
 
 	int nRoll = RandomInt(0, 2);
+	m_nWave2LastBuffType.Set(nRoll);
 	const char* pszBuffName = "";
 
 	if (nRoll == 0)
@@ -22893,12 +22931,14 @@ void CTFGameRules::Wave2_OnBotKilled(CTFBot* pBot)
 		pBot->ChangeTeam(TEAM_SPECTATOR, false, true);
 	}
 
-	m_nWave2BotsAliveCount--;
+	m_nWave2BotsAliveCount.Set(m_nWave2BotsAliveCount - 1);
 
 	if (m_nWave2BotsAliveCount <= 0 && !m_bWave2InCooldown)
 	{
 		m_bWave2InCooldown = true;
+		m_bWave2InCooldown_Net.Set(true);
 		m_flWave2CooldownEndTime = gpGlobals->curtime + 5.0f;
+		m_flWave2CooldownEndTime_Net.Set(m_flWave2CooldownEndTime);
 		Wave2_RollBuff();
 	}
 }
