@@ -2828,6 +2828,7 @@ void CTFPlayer::PostThink()
 
 			SetAbsVelocity(vecVelocity);
 
+			DispatchParticleEffect("rocketjump_smoke", PATTACH_POINT_FOLLOW, this, "foot_L");
 			EmitSound("Weapon_Mantreads.Impact"); //a changer pour metre particules et bruit de slam
 		}
 	}
@@ -2872,6 +2873,7 @@ void CTFPlayer::PostThink()
 			UTIL_ScreenShake(GetAbsOrigin(), 25.0f, 150.0, 1.0, flSlamRadius, SHAKE_START);
 			EmitSound("Weapon_Mantreads.Impact");
 			EmitSound("Player.FallDamageDealt");
+			DispatchParticleEffect("Explosion_ShockWave_01", GetAbsOrigin(), GetAbsAngles());
 		}
 
 		m_bSlamArmed = false;
@@ -3272,6 +3274,9 @@ void CTFPlayer::Precache()
 	PrecacheTFPlayer();
 
 	BaseClass::Precache();
+
+	PrecacheParticleSystem("rocketjump_smoke");
+	PrecacheParticleSystem("Explosion_ShockWave_01");
 }
 
 //-----------------------------------------------------------------------------
@@ -8990,6 +8995,19 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CBaseEntity *pAttacker = info.GetAttacker();
 	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
+
+	if (TFGameRules() && TFGameRules()->Wave2_IsActive())
+	{
+		if (pTFAttacker && TFGameRules()->Wave2_IsWaveBot(pTFAttacker))
+		{
+			info.ScaleDamage(TFGameRules()->Wave2_GetDamageDealtMult());
+		}
+
+		if (TFGameRules()->Wave2_IsWaveBot(this))
+		{
+			info.ScaleDamage(TFGameRules()->Wave2_GetDamageTakenMult());
+		}
+	}
 
 	bool bDebug = tf_debug_damage.GetBool();
 

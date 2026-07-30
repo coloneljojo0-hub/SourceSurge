@@ -1711,6 +1711,12 @@ void CTFGameRules::StartNextWave(void)
 		TFGameRules()->StartNextWave();
 	}
 
+
+//-----------------------------------------------------------------------------
+// Purpose:wavesofjews
+//-----------------------------------------------------------------------------
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3438,6 +3444,17 @@ CTFGameRules::CTFGameRules()
 	m_iCurrentWave = 0;
 	m_iBotsAliveThisWave = 0;
 	m_bWavesEnabled = false;
+
+	m_bWave2Active = false;
+	m_nWave2Difficulty = 0;
+	m_nWave2CurrentWave = 0;
+	m_nWave2BotsAliveCount = 0;
+	m_bWave2InCooldown = false;
+	m_flWave2CooldownEndTime = 0.0f;
+	m_flWave2NextAmmoRefillTime = 0.0f;
+	m_flWave2HealthMult = 1.0f;
+	m_flWave2DamageMult = 1.0f;
+	m_flWave2ResistMult = 1.0f;
 
 #else // GAME_DLL
 
@@ -8141,6 +8158,15 @@ void CTFGameRules::LevelShutdown()
 //-----------------------------------------------------------------------------
 void CTFGameRules::Think()
 {
+	if (m_bWave2Active)
+	{
+		Wave2_Think();
+	}
+
+	if (m_bMapCycleNeedsUpdate)
+	
+	
+	
 	if ( m_bMapCycleNeedsUpdate )
 	{
 		m_bMapCycleNeedsUpdate = false;
@@ -18441,22 +18467,20 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 		if (pBot)
 		{
 			Vector vecOrigin = pBot->GetAbsOrigin();
-
 			CBaseEntity* pAmmo = CBaseEntity::Create("item_ammopack_small", vecOrigin, vec3_angle);
-			if (pAmmo)
-			{
-				pAmmo->Spawn();
-			}
-
+			if (pAmmo) pAmmo->Spawn();
 			CBaseEntity* pHealth = CBaseEntity::Create("item_healthkit_small", vecOrigin + Vector(20, 0, 0), vec3_angle);
-			if (pHealth)
-			{
-				pHealth->Spawn();
-			}
+			if (pHealth) pHealth->Spawn();
 
 			OnBotKilled();
+
+			if (m_bWave2Active && Wave2_IsWaveBot(pBot))
+			{
+				Wave2_OnBotKilled(pBot);
+			}
 		}
 	}
+
 #else	// CLIENT_DLL
 
 	if ( !Q_strcmp( eventName, "overtime_nag" ) )
@@ -22626,3 +22650,294 @@ void CTFGameRules::RegisterScriptFunctions()
 }
 
 #endif // GAME_DLL
+
+// ============================================================================
+// WAVE 2 SYSTEM please work im begging 
+// ============================================================================
+#ifdef GAME_DLL
+
+CON_COMMAND_F(tf_wave2_start, "Start the wave 2 bot system. Usage: tf_wave2_start <hard|harder|hardest>", FCVAR_GAMEDLL | FCVAR_CHEAT)
+{
+	if (!UTIL_IsCommandIssuedByServerAdmin())
+		return;
+
+	int nDifficulty = 0;
+	if (args.ArgC() > 1)
+	{
+		if (!Q_stricmp(args.Arg(1), "harder"))
+			nDifficulty = 1;
+		else if (!Q_stricmp(args.Arg(1), "hardest"))
+			nDifficulty = 2;
+	}
+
+	TFGameRules()->Wave2_Start(nDifficulty);
+}
+
+CON_COMMAND_F(tf_wave2_stop, "Stop the wave 2 bot system and clean up all wave bots.", FCVAR_GAMEDLL | FCVAR_CHEAT)
+{
+	if (!UTIL_IsCommandIssuedByServerAdmin())
+		return;
+
+	TFGameRules()->Wave2_Stop();
+}
+
+void CTFGameRules::Wave2_Start(int nDifficulty)
+{
+	m_bWave2Active = true;
+	m_nWave2Difficulty = nDifficulty;
+	m_nWave2CurrentWave = 0;
+	m_bWave2InCooldown = false;
+	m_flWave2HealthMult = 1.0f;
+	m_flWave2DamageMult = 1.0f;
+	m_flWave2ResistMult = 1.0f;
+
+	Wave2_SpawnWave();
+
+	Msg("Wave2: started at difficulty %d\n", nDifficulty);
+}
+
+void CTFGameRules::Wave2_Stop(void)
+{
+	m_bWave2Active = false;
+	m_bWave2InCooldown = false;
+
+	FOR_EACH_VEC(m_hWave2Bots, i)
+	{
+		CTFBot* pBot = m_hWave2Bots[i];
+		if (pBot)
+		{
+			engine->ServerCommand(UTIL_VarArgs("kickid %d\n", pBot->GetUserID()));
+		}
+	}
+	m_hWave2Bots.RemoveAll();
+
+	m_nWave2CurrentWave = 0;
+	m_nWave2BotsAliveCount = 0;
+
+	Msg("Wave2: stopped, all bots removed.\n");
+}
+
+void CTFGameRules::Wave2_GetCompositionForWave(int nWave, int& nSnipers, int& nSpies)
+{
+	nSnipers = 1;
+	nSpies = 2;
+
+	if (nWave >= 5)
+		nSnipers = 2;
+
+	if (nWave >= 10)
+		nSpies = 3;
+
+	if (nWave >= 20)
+		nSpies = 4;
+
+	// Hard cap at 6 total, just in case
+	while (nSnipers + nSpies > 6)
+	{
+		if (nSpies > 2)
+			nSpies--;
+		else if (nSnipers > 1)
+			nSnipers--;
+		else
+			break;
+	}
+}
+
+void CTFGameRules::Wave2_ApplyBuffsToBot(CTFBot* pBot)
+{
+	if (!pBot)
+		return;
+
+	int nBaseHealth = pBot->GetMaxHealth();
+	int nNewHealth = (int)(nBaseHealth * m_flWave2HealthMult);
+	pBot->ModifyMaxHealth(nNewHealth, true, false);
+}
+
+void CTFGameRules::Wave2_SpawnWave(void)
+{
+	m_nWave2CurrentWave++;
+	m_bWave2InCooldown = false;
+
+	// Clean up last wave's (dead) bots before making new ones
+	FOR_EACH_VEC(m_hWave2Bots, i)
+	{
+		CTFBot* pOldBot = m_hWave2Bots[i];
+		if (pOldBot)
+		{
+			engine->ServerCommand(UTIL_VarArgs("kickid %d\n", pOldBot->GetUserID()));
+		}
+	}
+	m_hWave2Bots.RemoveAll();
+
+	int nSnipers, nSpies;
+	Wave2_GetCompositionForWave(m_nWave2CurrentWave, nSnipers, nSpies);
+
+	CBasePlayer* pHost = UTIL_GetListenServerHost();
+	int nTotalBots = nSnipers + nSpies;
+	m_nWave2BotsAliveCount = nTotalBots;
+
+	// AI aggression scales a little with our difficulty setting too
+	CTFBot::DifficultyType eBotSkill = CTFBot::NORMAL;
+	if (m_nWave2Difficulty == 1) eBotSkill = CTFBot::HARD;
+	else if (m_nWave2Difficulty == 2) eBotSkill = CTFBot::EXPERT;
+
+	for (int i = 0; i < nSnipers; i++)
+	{
+		char name[64];
+		V_snprintf(name, sizeof(name), "Wave Sniper %d", i);
+
+		CTFBot* pBot = NextBotCreatePlayerBot< CTFBot >(name);
+		if (!pBot)
+			continue;
+
+		pBot->ChangeTeam(TF_TEAM_BLUE, false, true);
+		pBot->HandleCommand_JoinClass("sniper");
+		pBot->SetDifficulty(eBotSkill);
+		pBot->SetMission(CTFBot::MISSION_SEEK_AND_DESTROY);
+		pBot->SetAttribute(CTFBot::IGNORE_FLAG);
+		pBot->SetBehaviorFlag(TFBOT_IGNORE_SCENARIO_GOALS);
+		pBot->ForceRespawn();
+
+		if (pHost)
+		{
+			Vector vecOrigin = pHost->GetAbsOrigin();
+			QAngle angAngles = pHost->GetAbsAngles();
+			Vector vecOffset(RandomFloat(-700, 700), RandomFloat(-700, 700), 0);
+			if (vecOffset.Length2D() > 700.0f)
+			{
+				vecOffset = vecOffset.Normalized() * 700.0f;
+			}
+			Vector vecFinal = vecOrigin + vecOffset;
+			pBot->Teleport(&vecFinal, &angAngles, &vec3_origin);
+		}
+
+		Wave2_ApplyBuffsToBot(pBot);
+		m_hWave2Bots.AddToTail(pBot);
+	}
+
+	for (int i = 0; i < nSpies; i++)
+	{
+		char name[64];
+		V_snprintf(name, sizeof(name), "Wave Spy %d", i);
+
+		CTFBot* pBot = NextBotCreatePlayerBot< CTFBot >(name);
+		if (!pBot)
+			continue;
+
+		pBot->ChangeTeam(TF_TEAM_BLUE, false, true);
+		pBot->HandleCommand_JoinClass("spy");
+		pBot->SetDifficulty(eBotSkill);
+		pBot->SetMission(CTFBot::MISSION_SEEK_AND_DESTROY);
+		pBot->SetAttribute(CTFBot::IGNORE_FLAG);
+		pBot->SetBehaviorFlag(TFBOT_IGNORE_SCENARIO_GOALS);
+		pBot->SetWeaponRestriction(CTFBot::PRIMARY_ONLY); // forces revolver only, no backstab/disguise shenanigans
+		pBot->ForceRespawn();
+
+		if (pHost)
+		{
+			Vector vecOrigin = pHost->GetAbsOrigin();
+			QAngle angAngles = pHost->GetAbsAngles();
+			Vector vecOffset(RandomFloat(-700, 700), RandomFloat(-700, 700), 0);
+			if (vecOffset.Length2D() > 700.0f)
+			{
+				vecOffset = vecOffset.Normalized() * 700.0f;
+			}
+			Vector vecFinal = vecOrigin + vecOffset;
+			pBot->Teleport(&vecFinal, &angAngles, &vec3_origin);
+		}
+
+		Wave2_ApplyBuffsToBot(pBot);
+		m_hWave2Bots.AddToTail(pBot);
+	}
+
+	Msg("Wave2: wave %d started with %d bots (%d sniper, %d spy)\n", m_nWave2CurrentWave, nTotalBots, nSnipers, nSpies);
+}
+
+void CTFGameRules::Wave2_RollBuff(void)
+{
+	float flScale = 1.0f;
+	if (m_nWave2Difficulty == 1) flScale = 1.5f;
+	else if (m_nWave2Difficulty == 2) flScale = 2.0f;
+
+	int nRoll = RandomInt(0, 2);
+	const char* pszBuffName = "";
+
+	if (nRoll == 0)
+	{
+		m_flWave2HealthMult += 0.15f * flScale;
+		pszBuffName = "MORE HEALTH";
+	}
+	else if (nRoll == 1)
+	{
+		m_flWave2DamageMult += 0.10f * flScale;
+		pszBuffName = "MORE DAMAGE";
+	}
+	else
+	{
+		m_flWave2ResistMult -= 0.08f * flScale;
+		if (m_flWave2ResistMult < 0.1f)
+			m_flWave2ResistMult = 0.1f; // floor so bots stay killable
+		pszBuffName = "MORE RESISTANCE";
+	}
+
+	Msg("Wave2: rolled buff -> %s (HealthMult=%.2f DamageMult=%.2f ResistMult=%.2f)\n",
+		pszBuffName, m_flWave2HealthMult, m_flWave2DamageMult, m_flWave2ResistMult);
+}
+
+void CTFGameRules::Wave2_OnBotKilled(CTFBot* pBot)
+{
+	// Move to spectator immediately so the engine's normal respawn-wave logic
+	// can't bring them back before the next wave starts
+	if (pBot)
+	{
+		pBot->ChangeTeam(TEAM_SPECTATOR, false, true);
+	}
+
+	m_nWave2BotsAliveCount--;
+
+	if (m_nWave2BotsAliveCount <= 0 && !m_bWave2InCooldown)
+	{
+		m_bWave2InCooldown = true;
+		m_flWave2CooldownEndTime = gpGlobals->curtime + 5.0f;
+		Wave2_RollBuff();
+	}
+}
+
+void CTFGameRules::Wave2_Think(void)
+{
+	if (gpGlobals->curtime >= m_flWave2NextAmmoRefillTime)
+	{
+		m_flWave2NextAmmoRefillTime = gpGlobals->curtime + 2.0f;
+
+		FOR_EACH_VEC(m_hWave2Bots, i)
+		{
+			CTFBot* pBot = m_hWave2Bots[i];
+			if (pBot && pBot->IsAlive())
+			{
+				pBot->GiveAmmo(200, TF_AMMO_PRIMARY, true);
+				pBot->GiveAmmo(200, TF_AMMO_SECONDARY, true);
+				pBot->GiveAmmo(200, TF_AMMO_METAL, true);
+			}
+		}
+	}
+
+	if (m_bWave2InCooldown && gpGlobals->curtime >= m_flWave2CooldownEndTime)
+	{
+		Wave2_SpawnWave();
+	}
+}
+
+bool CTFGameRules::Wave2_IsWaveBot(CBaseEntity* pEntity) const
+{
+	if (!pEntity)
+		return false;
+
+	FOR_EACH_VEC(m_hWave2Bots, i)
+	{
+		if (m_hWave2Bots[i].Get() == pEntity)
+			return true;
+	}
+	return false;
+}
+
+#endif // GAME_DLL	

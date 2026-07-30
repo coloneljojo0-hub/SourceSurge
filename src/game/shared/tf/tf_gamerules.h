@@ -1051,8 +1051,36 @@ private:
 #ifdef GAME_DLL
 	int		m_iCurrentWave;
 	int		m_iBotsAliveThisWave;
+	void	Wave2_SpawnWave(void);
+	void	Wave2_RollBuff(void);
+	void	Wave2_ApplyBuffsToBot(CTFBot* pBot);
+	void	Wave2_GetCompositionForWave(int nWave, int& nSnipers, int& nSpies);
+
+	bool	m_bWave2Active;
+	int		m_nWave2Difficulty;			// 0=hard, 1=harder, 2=hardest
+	int		m_nWave2CurrentWave;
+	int		m_nWave2BotsAliveCount;
+	bool	m_bWave2InCooldown;
+	float	m_flWave2CooldownEndTime;
+	float	m_flWave2NextAmmoRefillTime;
+
+	float	m_flWave2HealthMult;
+	float	m_flWave2DamageMult;
+	float	m_flWave2ResistMult;
+
+	CUtlVector< CHandle< CTFBot > > m_hWave2Bots;
+
 public:
 	bool	m_bWavesEnabled;
+	void	Wave2_Start(int nDifficulty);
+	void	Wave2_Stop(void);
+	void	Wave2_Think(void);
+	bool	Wave2_IsActive(void) const { return m_bWave2Active; }
+	bool	Wave2_IsWaveBot(CBaseEntity* pEntity) const;
+	float	Wave2_GetDamageDealtMult(void) const { return m_flWave2DamageMult; }
+	float	Wave2_GetDamageTakenMult(void) const { return m_flWave2ResistMult; }
+	void	Wave2_OnBotKilled(CTFBot* pBot);
+
 private:
 #endif
 
