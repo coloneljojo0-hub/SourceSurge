@@ -22714,6 +22714,8 @@ void CTFGameRules::Wave2_Start(int nDifficulty)
 	m_flWave2HealthMult = 1.0f;
 	m_flWave2DamageMult = 1.0f;
 	m_flWave2ResistMult = 1.0f;
+	m_Wave2SpyNextFireTime.RemoveAll();
+	m_Wave2SpyNextFireTime.SetLessFunc(DefLessFunc(CTFBot*));
 
 	Wave2_SpawnWave();
 
@@ -23012,6 +23014,57 @@ void CTFGameRules::Wave2_Think(void)
 				pBot->GiveAmmo(200, TF_AMMO_PRIMARY, true);
 				pBot->GiveAmmo(200, TF_AMMO_SECONDARY, true);
 				pBot->GiveAmmo(200, TF_AMMO_METAL, true);
+			}
+		}
+	}
+
+	// --- Spy manual targeting override ---
+	// Native TFBot AI deliberately refuses to aim while a disguised, non-stealthed
+	// Spy sees a threat (HARD+ difficulty) - see CTFBot::UpdateLookingAround().
+	// We bypass that entirely here for our wave spies.
+	FOR_EACH_VEC(m_hWave2Bots, i)
+	{
+		CTFBot* pBot = m_hWave2Bots[i];
+		if (!pBot || !pBot->IsAlive())
+			continue;
+
+		if (!pBot->IsPlayerClass(TF_CLASS_SPY))
+			continue;
+
+		const CKnownEntity* threat = pBot->GetVisionInterface()->GetPrimaryKnownThreat();
+		if (!threat || !threat->GetEntity() || !threat->GetEntity()->IsAlive())
+			continue;
+
+		if (!threat->IsVisibleInFOVNow())
+			continue;
+
+		// make sure we're holding the revolver, not the knife
+		CBaseCombatWeapon* pRevolver = pBot->Weapon_GetSlot(TF_WPN_TYPE_PRIMARY);
+		if (pRevolver)
+		{
+			pBot->Weapon_Switch(pRevolver);
+		}
+
+		// force the aim the native code refuses to do while disguised
+		pBot->GetBodyInterface()->AimHeadTowards(threat->GetEntity(), IBody::CRITICAL, 0.2f, NULL, "Wave2 forced spy aim override");
+
+		CTFPlayer* pTFTarget = ToTFPlayer(threat->GetEntity());
+		float flTargetSpeed = pTFTarget ? pTFTarget->GetAbsVelocity().Length2D() : 0.0f;
+
+		if (flTargetSpeed <= 500.0f)
+		{
+			int idx = m_Wave2SpyNextFireTime.Find(pBot);
+			float flNextFire = (idx != m_Wave2SpyNextFireTime.InvalidIndex()) ? m_Wave2SpyNextFireTime[idx] : 0.0f;
+
+			if (gpGlobals->curtime >= flNextFire)
+			{
+				pBot->PressFireButton();
+
+				float flNewNextFire = gpGlobals->curtime + 1.5f;
+				if (idx != m_Wave2SpyNextFireTime.InvalidIndex())
+					m_Wave2SpyNextFireTime[idx] = flNewNextFire;
+				else
+					m_Wave2SpyNextFireTime.Insert(pBot, flNewNextFire);
 			}
 		}
 	}

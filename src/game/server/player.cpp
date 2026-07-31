@@ -8725,7 +8725,7 @@ const QAngle& CBasePlayer::GetPunchAngle()
 
 void CBasePlayer::SetPunchAngle( const QAngle &punchAngle )
 {
-	m_Local.m_vecPunchAngle = punchAngle;
+	m_Local.m_vecPunchAngle = QAngle(0, 0, 0); // view punch disabled
 
 	if ( IsAlive() )
 	{

@@ -3536,34 +3536,10 @@ void CTFPlayer::ApplyGenericPushbackImpulse( const Vector &vecImpulse, CTFPlayer
 // Purpose: Go between for Setting Local Punch Impulses. Checks item attributes
 // Use this instead of directly calling m_Local.m_vecPunchAngle.SetX( value );
 //-----------------------------------------------------------------------------
-bool CTFPlayer::ApplyPunchImpulseX ( float flImpulse ) 
+bool CTFPlayer::ApplyPunchImpulseX(float flImpulse)
 {
-	// Check for No Aim Flinch
-	bool bFlinch = true;
-	if ( IsPlayerClass( TF_CLASS_SNIPER ) && m_Shared.InCond( TF_COND_AIMING ) )
-	{	
-		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
-		if ( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) )
-		{
-			CTFSniperRifle *pRifle = static_cast< CTFSniperRifle* >( pWeapon );
-			if ( pRifle->IsFullyCharged() )
-			{
-				int iAimingNoFlinch = 0;
-				CALL_ATTRIB_HOOK_INT( iAimingNoFlinch, aiming_no_flinch );
-				if ( iAimingNoFlinch > 0 )
-				{
-					bFlinch = false;
-				}
-			}
-		}
-	}
-	
-	if ( bFlinch )
-	{
-		m_Local.m_vecPunchAngle.SetX( flImpulse );
-	}
-
-	return bFlinch;
+	// View punch disabled - always no-op
+	return false;
 }
 
 //-----------------------------------------------------------------------------
