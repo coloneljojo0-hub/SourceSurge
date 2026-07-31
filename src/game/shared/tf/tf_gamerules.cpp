@@ -22779,6 +22779,61 @@ void CTFGameRules::Wave2_ApplyBuffsToBot(CTFBot* pBot)
 	pBot->ModifyMaxHealth(nNewHealth, true, false);
 }
 
+bool CTFGameRules::Wave2_FindValidTeleportSpot(const Vector& vecOrigin, Vector& outSpot)
+{
+	const float flMaxRadius = 700.0f;
+	const int nMaxAttempts = 16;
+
+	for (int attempt = 0; attempt < nMaxAttempts; attempt++)
+	{
+		// Random XY offset within radius
+		Vector vecOffset(RandomFloat(-flMaxRadius, flMaxRadius), RandomFloat(-flMaxRadius, flMaxRadius), 0.0f);
+		if (vecOffset.Length2D() > flMaxRadius)
+		{
+			vecOffset = vecOffset.Normalized() * flMaxRadius;
+		}
+
+		Vector vecTestPoint = vecOrigin + vecOffset;
+		vecTestPoint.z += 100.0f; // start trace from a bit above, in case terrain is uneven
+
+		// Trace straight down to find the floor
+		trace_t trFloor;
+		UTIL_TraceLine(vecTestPoint, vecTestPoint - Vector(0, 0, 500.0f), MASK_PLAYERSOLID, NULL, COLLISION_GROUP_PLAYER_MOVEMENT, &trFloor);
+
+		if (trFloor.fraction >= 1.0f || trFloor.allsolid)
+		{
+			continue; // no floor found, or started stuck in solid — try another spot
+		}
+
+		// Reject spots that are too far above/below the original origin's floor level
+		float flHeightDiff = fabs(trFloor.endpos.z - vecOrigin.z);
+		if (flHeightDiff > 70.0f)
+		{
+			continue;
+		}
+
+		Vector vecStandSpot = trFloor.endpos + Vector(0, 0, 2.0f); // lift slightly off the floor
+
+		// Verify a player-sized hull actually fits here without clipping into anything
+		trace_t trHull;
+		UTIL_TraceHull(vecStandSpot, vecStandSpot,
+			VEC_HULL_MIN, VEC_HULL_MAX,
+			MASK_PLAYERSOLID, NULL, COLLISION_GROUP_PLAYER_MOVEMENT, &trHull);
+
+		if (trHull.startsolid || trHull.fraction < 1.0f)
+		{
+			continue; // spot is inside a wall/prop, try again
+		}
+
+		outSpot = vecStandSpot;
+		return true;
+	}
+
+	// Fallback: couldn't find a clean spot after nMaxAttempts, just use the origin itself
+	outSpot = vecOrigin;
+	return false;
+}
+
 void CTFGameRules::Wave2_SpawnWave(void)
 {
 	m_nWave2CurrentWave.Set(m_nWave2CurrentWave + 1);
@@ -22839,13 +22894,11 @@ void CTFGameRules::Wave2_SpawnWave(void)
 		{
 			Vector vecOrigin = pHost->GetAbsOrigin();
 			QAngle angAngles = pHost->GetAbsAngles();
-			Vector vecOffset(RandomFloat(-700, 700), RandomFloat(-700, 700), 0);
-			if (vecOffset.Length2D() > 700.0f)
-			{
-				vecOffset = vecOffset.Normalized() * 700.0f;
-			}
-			Vector vecFinal = vecOrigin + vecOffset;
-			pBot->Teleport(&vecFinal, &angAngles, &vec3_origin);
+
+			Vector vecSpot;
+			Wave2_FindValidTeleportSpot(vecOrigin, vecSpot);
+
+			pBot->Teleport(&vecSpot, &angAngles, &vec3_origin);
 		}
 
 		Wave2_ApplyBuffsToBot(pBot);
@@ -22889,6 +22942,8 @@ void CTFGameRules::Wave2_SpawnWave(void)
 
 	Msg("Wave2: wave %d started with %d bots (%d sniper, %d spy)\n", m_nWave2CurrentWave, nTotalBots, nSnipers, nSpies);
 }
+
+
 
 void CTFGameRules::Wave2_RollBuff(void)
 {

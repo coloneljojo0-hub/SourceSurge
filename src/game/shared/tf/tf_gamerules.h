@@ -1078,6 +1078,7 @@ public:
 	float	Wave2_GetDamageDealtMult(void) const { return m_flWave2DamageMult; }
 	float	Wave2_GetDamageTakenMult(void) const { return m_flWave2ResistMult; }
 	void	Wave2_OnBotKilled(CTFBot* pBot);
+	bool	Wave2_FindValidTeleportSpot(const Vector& vecOrigin, Vector& outSpot);
 
 private:
 #endif
