@@ -18485,23 +18485,32 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 	{
 		int victimUserID = event->GetInt("userid");
 		CBasePlayer* pVictim = UTIL_PlayerByUserId(victimUserID);
-
 		CTFBot* pBot = ToTFBot(pVictim);
 		if (pBot)
 		{
-			Vector vecOrigin = pBot->GetAbsOrigin();
-			CBaseEntity* pAmmo = CBaseEntity::Create("item_ammopack_small", vecOrigin, vec3_angle);
-			if (pAmmo) pAmmo->Spawn();
-			CBaseEntity* pHealth = CBaseEntity::Create("item_healthkit_small", vecOrigin + Vector(20, 0, 0), vec3_angle);
-			if (pHealth) pHealth->Spawn();
-
+			// no more item drops - health is granted directly to the killer instead
 			OnBotKilled();
 
 			if (m_bWave2Active && Wave2_IsWaveBot(pBot))
 			{
 				Wave2_OnBotKilled(pBot);
 			}
+
+			int attackerUserID = event->GetInt("attacker");
+			CBasePlayer* pAttacker = UTIL_PlayerByUserId(attackerUserID);
+			CTFPlayer* pTFAttacker = ToTFPlayer(pAttacker);
+
+			if (pTFAttacker && pTFAttacker->IsAlive())
+			{
+				int customKill = event->GetInt("customkill");
+				bool bBigHeal = (customKill == TF_DMG_CUSTOM_BACKSTAB) || (customKill == TF_DMG_CUSTOM_HEADSHOT);
+
+				int iHealAmount = bBigHeal ? 50 : 25;
+
+				pTFAttacker->TakeHealth(iHealAmount, DMG_IGNORE_MAXHEALTH);
+			}
 		}
+		
 	}
 
 #else	// CLIENT_DLL

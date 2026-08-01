@@ -21,7 +21,6 @@ CTFPlayMenu::CTFPlayMenu(vgui::Panel* parent) : BaseClass(parent, "TFPlayMenu")
 	SetSizeable(false);
 	SetVisible(false);
 	SetProportional(false);
-
 	SetMinimumSize(420, 480);
 	SetSize(420, 480);
 
@@ -131,19 +130,94 @@ void CTFPlayMenu::ApplySchemeSettings(IScheme* pScheme)
 {
 	BaseClass::ApplySchemeSettings(pScheme);
 
-	// TF2 Option Window Theme Colors
-	SetBgColor(Color(38, 35, 33, 245));         // Dark TF Charcoal background
+	SetBgColor(Color(43, 39, 36, 255));
 	SetBorder(pScheme->GetBorder("BaseBorder"));
 
-	// Apply TF2 styling to pages
-	Color pageBg = Color(46, 43, 40, 200);
+	Color pageBg(43, 39, 36, 255); // same as window - pages are flush, not boxed
 	m_pSingleplayerPage->SetBgColor(pageBg);
 	m_pCoopPage->SetBgColor(pageBg);
 	m_p1v1Page->SetBgColor(pageBg);
 
-	m_pSingleplayerPage->SetBorder(pScheme->GetBorder("ButtonDepressedBorder"));
-	m_pCoopPage->SetBorder(pScheme->GetBorder("ButtonDepressedBorder"));
-	m_p1v1Page->SetBorder(pScheme->GetBorder("ButtonDepressedBorder"));
+	m_pSingleplayerPage->SetPaintBorderEnabled(false);
+	m_pCoopPage->SetPaintBorderEnabled(false);
+	m_p1v1Page->SetPaintBorderEnabled(false);
+
+	vgui::HFont hFontLabel = pScheme->GetFont("DefaultSmall", true);
+	vgui::HFont hFontTab = pScheme->GetFont("Default", true);
+
+	Color textColor(214, 202, 187, 255);     // warm off-white, matches option labels
+	Color mutedTextColor(150, 138, 124, 255); // dimmer grey-tan for inactive tabs
+
+	// Style every label to match the reference (light warm text, small font)
+	vgui::Label* labels[] = {
+		m_pSPMapLabel, m_pSPDiffLabel,
+		m_pCoopMapLabel, m_pCoopDiffLabel, m_pCoopIPLabel, m_pCoopJoinLabel,
+		m_p1v1MapLabel, m_p1v1RoundsLabel, m_p1v1IPLabel, m_p1v1JoinLabel
+	};
+	for (int i = 0; i < ARRAYSIZE(labels); i++)
+	{
+		if (labels[i])
+		{
+			labels[i]->SetFont(hFontLabel);
+			labels[i]->SetFgColor(textColor);
+			labels[i]->SetContentAlignment(vgui::Label::a_west);
+		}
+	}
+
+	// Checkboxes get the same warm text color
+	vgui::CheckButton* checks[] = { m_p1v1NoHookCheck, m_p1v1NoSapperCheck, m_p1v1NoKnifeCheck };
+	for (int i = 0; i < ARRAYSIZE(checks); i++)
+	{
+		if (checks[i])
+		{
+			checks[i]->SetFont(hFontLabel);
+			checks[i]->SetFgColor(textColor);
+		}
+	}
+
+	// Real rectangular tab buttons - filled background, not just colored text
+	Color tabInactiveBg(30, 27, 25, 255);
+	Color tabHoverBg(55, 50, 46, 255);
+
+	vgui::Button* tabButtons[] = { m_pTabSingleplayerBtn, m_pTabMultiplayerBtn, m_pSubTabCoopBtn, m_pSubTab1v1Btn };
+	for (int i = 0; i < ARRAYSIZE(tabButtons); i++)
+	{
+		if (tabButtons[i])
+		{
+			tabButtons[i]->SetFont(hFontTab);
+			tabButtons[i]->SetPaintBorderEnabled(false);
+			tabButtons[i]->SetContentAlignment(vgui::Label::a_center);
+			tabButtons[i]->SetDefaultColor(mutedTextColor, tabInactiveBg);
+			tabButtons[i]->SetArmedColor(textColor, tabHoverBg);
+			tabButtons[i]->SetDepressedColor(textColor, tabHoverBg);
+		}
+	}
+
+	// Primary action buttons keep a visible bordered look (Apply/OK equivalent)
+	vgui::Button* actionButtons[] = { m_pSPPlayButton, m_pCoopHostBtn, m_pCoopJoinBtn, m_p1v1HostBtn, m_p1v1JoinBtn };
+	for (int i = 0; i < ARRAYSIZE(actionButtons); i++)
+	{
+		if (actionButtons[i])
+		{
+			actionButtons[i]->SetFont(hFontTab);
+		}
+	}
+
+	// re-apply tab highlight colors now that fonts/colors exist
+	SwitchTab(m_iActiveMainTab, m_iActiveSubTab);
+}
+
+void CTFPlayMenu::PaintBackground()
+{
+	// Let Frame do its normal setup (title bar, corners, internal state) first,
+	// then paint a fully opaque rect on top to kill the translucency.
+	BaseClass::PaintBackground();
+
+	int wide, tall;
+	GetSize(wide, tall);
+
+	vgui::surface()->DrawSetColor(Color(43, 39, 36, 255));
+	vgui::surface()->DrawFilledRect(0, 0, wide, tall);
 }
 
 void CTFPlayMenu::PerformLayout()
@@ -153,11 +227,11 @@ void CTFPlayMenu::PerformLayout()
 	int wide, tall;
 	GetSize(wide, tall);
 
-	int margin = 16;
+	int margin = 24;
 	int contentWide = wide - (margin * 2);
 
-	// --- MAIN TABS ---
-	int mainTabY = 32;
+	// --- MAIN TABS --- (reference image uses generous top padding, tabs flush-left, sized to content not stretched)
+	int mainTabY = 20;
 	int mainBtnWide = (contentWide - 6) / 2;
 
 	m_pTabSingleplayerBtn->SetPos(margin, mainTabY);
@@ -191,8 +265,9 @@ void CTFPlayMenu::PerformLayout()
 	m_pCoopPage->SetBounds(margin, pageTop, contentWide, pageTall);
 	m_p1v1Page->SetBounds(margin, pageTop, contentWide, pageTall);
 
-	int pMargin = 12;
+	int pMargin = 4;              // pages are flush with the window now, not boxed
 	int pWide = contentWide - (pMargin * 2);
+	int rowSpacing = 34;          // generous vertical spacing between rows, matching the reference
 
 	//SINGLEPLAYER LAYOUT
 	m_pSPMapLabel->SetBounds(pMargin, 12, pWide, 18);
@@ -255,7 +330,26 @@ void CTFPlayMenu::SwitchTab(int mainTab, int subTab)
 	m_pSubTabCoopBtn->SetSelected(subTab == 0);
 	m_pSubTab1v1Btn->SetSelected(subTab == 1);
 
-	InvalidateLayout(true, false);
+	// Active tab gets a filled accent rectangle (matches the reddish highlight look), inactive stays flat dark
+	Color activeColor(235, 226, 202, 255);
+	Color inactiveColor(150, 138, 124, 255);
+	Color activeBg(151, 68, 51, 255);   // warm brick-red accent, like the reference's active tab
+	Color inactiveBg(30, 27, 25, 255);
+
+	m_pTabSingleplayerBtn->SetFgColor(mainTab == 0 ? activeColor : inactiveColor);
+	m_pTabSingleplayerBtn->SetDefaultColor(mainTab == 0 ? activeColor : inactiveColor, mainTab == 0 ? activeBg : inactiveBg);
+
+	m_pTabMultiplayerBtn->SetFgColor(mainTab == 1 ? activeColor : inactiveColor);
+	m_pTabMultiplayerBtn->SetDefaultColor(mainTab == 1 ? activeColor : inactiveColor, mainTab == 1 ? activeBg : inactiveBg);
+
+	bool bCoopActive = (mainTab == 1 && subTab == 0);
+	bool b1v1Active = (mainTab == 1 && subTab == 1);
+
+	m_pSubTabCoopBtn->SetFgColor(bCoopActive ? activeColor : inactiveColor);
+	m_pSubTabCoopBtn->SetDefaultColor(bCoopActive ? activeColor : inactiveColor, bCoopActive ? activeBg : inactiveBg);
+
+	m_pSubTab1v1Btn->SetFgColor(b1v1Active ? activeColor : inactiveColor);
+	m_pSubTab1v1Btn->SetDefaultColor(b1v1Active ? activeColor : inactiveColor, b1v1Active ? activeBg : inactiveBg);
 }
 
 void CTFPlayMenu::OnCommand(const char* command)

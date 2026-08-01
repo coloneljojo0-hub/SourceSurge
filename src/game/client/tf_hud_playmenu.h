@@ -26,6 +26,7 @@ public:
 	virtual void OnCommand(const char* command) OVERRIDE;
 	virtual void ApplySchemeSettings(vgui::IScheme* pScheme) OVERRIDE;
 	virtual void PerformLayout() OVERRIDE;
+	virtual void PaintBackground() OVERRIDE;
 
 	void SwitchTab(int mainTab, int subTab = 0);
 
