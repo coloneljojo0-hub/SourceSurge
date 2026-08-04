@@ -508,15 +508,12 @@ public:
 
 	virtual void	BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags = 0, CBasePlayer *pPlayer = NULL ) override;
 
-	void			RegisterScriptFunctions() override;
-
-	int				GetRoundState() { return (int)State_Get(); }
-
-	bool			InMatchStartCountdown() { return BInMatchStartCountdown(); }
-
+	void					RegisterScriptFunctions() override;
+	int						GetRoundState() { return (int)State_Get(); }
+	bool					InMatchStartCountdown() { return BInMatchStartCountdown(); }
+	virtual void			State_Enter_RND_RUNNING(void) OVERRIDE;
 protected:
-
-	virtual void LoadMapCycleFile( void ) OVERRIDE;
+	virtual void LoadMapCycleFile(void) OVERRIDE;
 	void TrackWorkshopMapsInMapCycle( void );
 
 	virtual const char* GetStalemateSong( int nTeam ) OVERRIDE;
@@ -1049,28 +1046,31 @@ private:
 	void PowerupTeamImbalance_SwapPlayers( int nLosingTeam );
 
 #ifdef GAME_DLL
-	int		m_iCurrentWave;
-	int		m_iBotsAliveThisWave;
+	int				m_iCurrentWave;
+	int				m_iBotsAliveThisWave;
 	void	Wave2_SpawnWave(void);
 	void	Wave2_RollBuff(void);
 	void	Wave2_ApplyBuffsToBot(CTFBot* pBot);
 	void	Wave2_GetCompositionForWave(int nWave, int& nSnipers, int& nSpies);
-
 	bool	m_bWave2Active;
-	int		m_nWave2Difficulty;			// 0=hard, 1=harder, 2=hardest
+	int				m_nWave2Difficulty;				  // 0=hard, 1=harder, 2=hardest
 	bool	m_bWave2InCooldown;
 	float	m_flWave2CooldownEndTime;
 	float	m_flWave2NextAmmoRefillTime;
-
 	float	m_flWave2HealthMult;
 	float	m_flWave2DamageMult;
 	float	m_flWave2ResistMult;
-
 	CUtlVector< CHandle< CTFBot > > m_hWave2Bots;
 
+	// --- Wavemode gamemode ---
+	bool	m_bWaveModeActive;
+	int		m_nWaveModeDifficulty;				  // 0=hard, 1=harder, 2=hardest - same convention as m_nWave2Difficulty
+	
 public:
 	bool	m_bWavesEnabled;
 	bool	Wave2_IsActive(void) const { return m_bWave2Active; }
+	void	WaveMode_SetActive(bool bActive, int nDifficulty);
+	void	WaveMode_Think(void);
 	void	Wave2_Start(int nDifficulty);
 	void	Wave2_Stop(void);
 	void	Wave2_Think(void);
@@ -1237,13 +1237,20 @@ private:
 	//waves stuff
 	CNetworkVar(int, m_nWave2CurrentWave);
 	CNetworkVar(int, m_nWave2BotsAliveCount);
-	CNetworkVar(bool, m_bWave2Active_Net);		// separate net copy, since m_bWave2Active is GAME_DLL only
+	CNetworkVar(bool, m_bWave2Active_Net);          // separate net copy, since m_bWave2Active is GAME_DLL only
+	CNetworkVar(bool, m_bWaveModeActive_Net);		// separate net copy, since m_bWaveModeActive is GAME_DLL only
+	CNetworkArray(bool, m_bWaveModeReady_Net, MAX_PLAYERS + 1);	// per-player-slot ready flags for wavemode ready-up
+	CNetworkVar(float, m_flWaveModeCountdownEndTime_Net);	// -1 = no countdown running
 	CNetworkVar(bool, m_bWave2InCooldown_Net);
 	CNetworkVar(float, m_flWave2CooldownEndTime_Net);
-	CNetworkVar(int, m_nWave2LastBuffType);		// -1 = none yet, 0 = health, 1 = damage, 2 = resist
-
+	CNetworkVar(int, m_nWave2LastBuffType);         // -1 = none yet, 0 = health, 1 = damage, 2 = resist
+	
 	public:
-		int		Wave2_GetCurrentWaveForHUD(void) const { return m_nWave2CurrentWave; } 
+		bool	WaveMode_IsActive(void) const { return m_bWaveModeActive_Net; }
+		bool	WaveMode_IsPlayerReady(int nEntIndex) const { return (nEntIndex > 0 && nEntIndex <= MAX_PLAYERS) ? m_bWaveModeReady_Net[nEntIndex] : false; }
+		void	WaveMode_SetPlayerReady(int nEntIndex, bool bReady) { if (nEntIndex > 0 && nEntIndex <= MAX_PLAYERS) m_bWaveModeReady_Net.Set(nEntIndex, bReady); }
+		float	WaveMode_GetCountdownEndTimeForHUD(void) const { return m_flWaveModeCountdownEndTime_Net; }
+		int     Wave2_GetCurrentWaveForHUD(void) const { return m_nWave2CurrentWave; }
 		int		Wave2_GetBotsAliveForHUD(void) const { return m_nWave2BotsAliveCount; }
 		bool	Wave2_IsInCooldownForHUD(void) const { return m_bWave2InCooldown_Net; }
 		bool	Wave2_IsActiveForHUD(void) const { return m_bWave2Active_Net; }

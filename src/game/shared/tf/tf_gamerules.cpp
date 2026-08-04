@@ -1419,15 +1419,17 @@ void RecvProxy_NewMapVoteStateChanged( const CRecvProxyData *pData, void *pStruc
 BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #ifdef CLIENT_DLL
 
-	//more wave stuff i guess :)
-	RecvPropInt(RECVINFO(m_nWave2CurrentWave)),
+	//more wave stuff i guess :(
+	RecvPropInt(RECVINFO(m_nWave2CurrentWave)),	
 	RecvPropInt(RECVINFO(m_nWave2BotsAliveCount)),
 	RecvPropBool(RECVINFO(m_bWave2Active_Net)),
 	RecvPropBool(RECVINFO(m_bWave2InCooldown_Net)),
 	RecvPropTime(RECVINFO(m_flWave2CooldownEndTime_Net)),
 	RecvPropInt(RECVINFO(m_nWave2LastBuffType)),
-
-	RecvPropInt( RECVINFO( m_nGameType ) ),
+	RecvPropBool(RECVINFO(m_bWaveModeActive_Net)),
+	RecvPropArray3(RECVINFO_ARRAY(m_bWaveModeReady_Net), RecvPropBool(RECVINFO(m_bWaveModeReady_Net[0]))),
+	RecvPropTime(RECVINFO(m_flWaveModeCountdownEndTime_Net)),
+	RecvPropInt(RECVINFO(m_nGameType)),
 	RecvPropInt( RECVINFO( m_nStopWatchState ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringBlue ) ),
@@ -1510,6 +1512,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool(SENDINFO(m_bWave2InCooldown_Net)),
 	SendPropTime(SENDINFO(m_flWave2CooldownEndTime_Net)),
 	SendPropInt(SENDINFO(m_nWave2LastBuffType)),
+	SendPropBool(SENDINFO(m_bWaveModeActive_Net)),
+	SendPropArray3(SENDINFO_ARRAY3(m_bWaveModeReady_Net), SendPropBool(SENDINFO_ARRAY(m_bWaveModeReady_Net))),
+	SendPropTime(SENDINFO(m_flWaveModeCountdownEndTime_Net)),
 
 //=============================================================================
 // HPE_BEGIN:
@@ -2919,15 +2924,18 @@ void CTFGameRules::EndManagedMvMMatch( bool bKickPlayersToParties )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFGameRules::UsePlayerReadyStatusMode( void )
+bool CTFGameRules::UsePlayerReadyStatusMode(void)
 {
-	if ( IsMannVsMachineMode() )
+	if (IsMannVsMachineMode())
 		return true;
 
-	if ( IsCompetitiveMode() )
+	if (IsCompetitiveMode())
 		return true;
 
-	if ( mp_tournament.GetBool() && mp_tournament_readymode.GetBool() )
+	if (mp_tournament.GetBool() && mp_tournament_readymode.GetBool())
+		return true;
+
+	if (WaveMode_IsActive() )
 		return true;
 
 	return false;
@@ -3475,6 +3483,16 @@ CTFGameRules::CTFGameRules()
 
 	m_nWave2BotsAliveCount.Set(0);
 	m_bWave2Active_Net.Set(false);
+
+	// Wavemode gamemode - must be explicitly reset, these are never zero-initialized otherwise
+	m_bWaveModeActive = false;
+	m_nWaveModeDifficulty = 0;
+	m_bWaveModeActive_Net.Set(false);
+	m_flWaveModeCountdownEndTime_Net.Set(-1.0f);
+	for (int nSlot = 0; nSlot <= MAX_PLAYERS; nSlot++)
+	{
+		m_bWaveModeReady_Net.Set(nSlot, false);
+	}
 	m_bWave2InCooldown_Net.Set(false);
 	m_flWave2CooldownEndTime_Net.Set(0.0f);
 	m_nWave2LastBuffType.Set(-1);
@@ -5168,6 +5186,22 @@ void CTFGameRules::RestartTournament( void )
 	ItemSystem()->ReloadWhitelist();
 
 	ResetPlayerAndTeamReadyState();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Wavemode hook - fires the moment the ready-up countdown completes
+//			and the round actually begins.
+//-----------------------------------------------------------------------------
+void CTFGameRules::State_Enter_RND_RUNNING(void)
+{
+	BaseClass::State_Enter_RND_RUNNING();
+
+#ifdef GAME_DLL
+	if (m_bWaveModeActive && !m_bWave2Active)
+	{
+		Wave2_Start(m_nWaveModeDifficulty);
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -8184,6 +8218,10 @@ void CTFGameRules::Think()
 	if (m_bWave2Active)
 	{
 		Wave2_Think();
+	}
+	if (m_bWaveModeActive)
+	{
+		WaveMode_Think();
 	}
 
 	if (m_bMapCycleNeedsUpdate)
@@ -22713,6 +22751,52 @@ CON_COMMAND_F(tf_wave2_stop, "Stop the wave 2 bot system and clean up all wave b
 	TFGameRules()->Wave2_Stop();
 }
 
+CON_COMMAND_F(tf_wavemode_ready, "Toggle your ready state for Wavemode.", FCVAR_GAMEDLL)
+{
+	CTFPlayer* pPlayer = ToTFPlayer(UTIL_GetCommandClient());
+	if (!pPlayer)
+		return;
+
+	if (!TFGameRules() || !TFGameRules()->WaveMode_IsActive())
+		return;
+
+	int nEntIndex = pPlayer->entindex();
+	bool bCurrentlyReady = TFGameRules()->WaveMode_IsPlayerReady(nEntIndex);
+
+	TFGameRules()->WaveMode_SetPlayerReady(nEntIndex, !bCurrentlyReady);
+
+}
+
+CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival gamemode. Usage: tf_wavemode_start <hard|harder|hardest>", FCVAR_GAMEDLL | FCVAR_CHEAT)
+{
+	if (args.ArgC() < 2)
+	{
+		Warning("Usage: tf_wavemode_start <hard|harder|hardest>\n");
+		return;
+	}
+
+	int nDifficulty = 0;
+	if (!Q_stricmp(args[1], "hard"))
+		nDifficulty = 0;
+	else if (!Q_stricmp(args[1], "harder"))
+		nDifficulty = 1;
+	else if (!Q_stricmp(args[1], "hardest"))
+		nDifficulty = 2;
+	else
+	{
+		Warning("Unknown difficulty '%s'. Use hard, harder, or hardest.\n", args[1]);
+		return;
+	}
+
+	if (!TFGameRules())
+		return;
+
+	// Fully custom ready-up - no native tournament/matchmaking state involved.
+	// WaveMode_Think() (called from CTFGameRules::Think()) watches ready state
+	// every tick and calls Wave2_Start() once all RED players are ready.
+	TFGameRules()->WaveMode_SetActive(true, nDifficulty);
+}
+
 void CTFGameRules::Wave2_Start(int nDifficulty)
 {
 	m_bWave2Active = true;
@@ -23081,6 +23165,68 @@ void CTFGameRules::Wave2_Think(void)
 	if (m_bWave2InCooldown && gpGlobals->curtime >= m_flWave2CooldownEndTime)
 	{
 		Wave2_SpawnWave();
+	}
+}
+
+void CTFGameRules::WaveMode_SetActive(bool bActive, int nDifficulty)
+{
+	m_bWaveModeActive = bActive;
+	m_bWaveModeActive_Net = bActive;
+	m_nWaveModeDifficulty = nDifficulty;
+
+	for (int i = 0; i <= MAX_PLAYERS; i++)
+	{
+		m_bWaveModeReady_Net.Set(i, false);
+	}
+}
+
+void CTFGameRules::WaveMode_Think(void)
+{
+	if (!m_bWaveModeActive || m_bWave2Active)
+		return;
+
+	CUtlVector<CTFPlayer*> playerVector;
+	CollectPlayers(&playerVector);
+
+	bool bAllRedReady = false;
+
+	FOR_EACH_VEC(playerVector, i)
+	{
+		CTFPlayer* pPlayer = playerVector[i];
+		if (!pPlayer || pPlayer->IsBot() || pPlayer->IsFakeClient())
+			continue;
+
+		if (pPlayer->GetTeamNumber() != TF_TEAM_RED)
+			continue;
+
+		bAllRedReady = true; // at least one real RED player exists
+
+		if (!WaveMode_IsPlayerReady(pPlayer->entindex()))
+		{
+			bAllRedReady = false;
+			break;
+		}
+	}
+
+	if (bAllRedReady)
+	{
+		// start (or continue) the 5 second countdown
+		if (m_flWaveModeCountdownEndTime_Net < 0.0f)
+		{
+			m_flWaveModeCountdownEndTime_Net.Set(gpGlobals->curtime + 5.0f);
+		}
+		else if (gpGlobals->curtime >= m_flWaveModeCountdownEndTime_Net)
+		{
+			Wave2_Start(m_nWaveModeDifficulty);
+		}
+	}
+	else
+	{
+		// someone un-readied - cancel any running countdown
+		if (m_flWaveModeCountdownEndTime_Net >= 0.0f)
+		{
+			m_flWaveModeCountdownEndTime_Net.Set(-1.0f);
+		}
 	}
 }
 

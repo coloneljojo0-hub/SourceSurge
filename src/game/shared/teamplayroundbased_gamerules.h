@@ -448,8 +448,8 @@ protected:
 	void State_Leave_PREROUND( void );
 	void State_Think_PREROUND( void );
 
-	void State_Enter_RND_RUNNING( void );
-	void State_Think_RND_RUNNING( void );
+	virtual void State_Enter_RND_RUNNING(void);
+	void State_Think_RND_RUNNING(void);
 
 	void State_Enter_TEAM_WIN( void );
 	void State_Think_TEAM_WIN( void );

@@ -1122,24 +1122,7 @@ void CTFGameMovement::AirDash( void )
 //-----------------------------------------------------------------------------
 void CTFGameMovement::PreventBunnyJumping()
 {
-	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
-		return;
-
-	// Speed at which bunny jumping is limited
-	float maxscaledspeed = BUNNYJUMP_MAX_SPEED_FACTOR * player->m_flMaxspeed;
-	if ( maxscaledspeed <= 0.0f )
-		return;
-
-	// Current player speed
-	float spd = mv->m_vecVelocity.Length();
-	if ( spd <= maxscaledspeed )
-		return;
-
-	// Apply this cropping fraction to velocity
-	float fraction = ( maxscaledspeed / spd );
-
-
-	mv->m_vecVelocity *= fraction;
+	return;
 }
 
 //-----------------------------------------------------------------------------
