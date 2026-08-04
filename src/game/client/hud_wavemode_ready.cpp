@@ -52,8 +52,8 @@ void CHudWaveModeReady::ApplySchemeSettings( IScheme *pScheme )
 	SetBgColor( Color( 20, 20, 20, 210 ) );
 	SetPaintBorderEnabled( false );
 
-	vgui::HFont hFontTitle = pScheme->GetFont("HudFontSmallBold", true);
-	vgui::HFont hFontRow = pScheme->GetFont("HudFontVerySmall", true);
+	vgui::HFont hFontTitle = pScheme->GetFont("HudFontMediumBold", true);
+	vgui::HFont hFontRow = pScheme->GetFont("HudFontSmallBold", true);
 
 	m_pTitleLabel->SetFont( hFontTitle );
 	m_pTitleLabel->SetFgColor( Color( 235, 226, 202, 255 ) );
@@ -82,8 +82,8 @@ void CHudWaveModeReady::PerformLayout()
 	int screenWide, screenTall;
 	vgui::surface()->GetScreenSize( screenWide, screenTall );
 
-	int panelWide = 420;
-	int panelTall = 460;
+	int panelWide = 460;
+	int panelTall = 500;
 	SetPos( ( screenWide - panelWide ) / 2, ( screenTall - panelTall ) / 2 );
 	SetSize( panelWide, panelTall );
 
