@@ -5204,6 +5204,17 @@ void CTFGameRules::State_Enter_RND_RUNNING(void)
 #endif
 }
 
+//sudden death when wavemode is active
+bool CTFGameRules::FPlayerCanRespawn(CBasePlayer* pPlayer)
+{
+	if (WaveMode_IsActive() && Wave2_IsActiveForHUD())
+	{
+		return false;
+	}
+
+	return BaseClass::FPlayerCanRespawn(pPlayer);
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

@@ -512,6 +512,7 @@ public:
 	int						GetRoundState() { return (int)State_Get(); }
 	bool					InMatchStartCountdown() { return BInMatchStartCountdown(); }
 	virtual void			State_Enter_RND_RUNNING(void) OVERRIDE;
+	virtual bool			FPlayerCanRespawn(CBasePlayer* pPlayer) OVERRIDE;
 protected:
 	virtual void LoadMapCycleFile(void) OVERRIDE;
 	void TrackWorkshopMapsInMapCycle( void );

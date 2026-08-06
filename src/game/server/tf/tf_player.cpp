@@ -1291,6 +1291,26 @@ void CTFPlayer::TFPlayerThink()
 		(this->*m_pStateInfo->pfnThink)();
 	}
 
+	// --- Passive RED health regeneration ---
+	if (GetTeamNumber() == TF_TEAM_RED) 
+	{
+		const float flTimeSinceDamage = gpGlobals->curtime - m_flLastDamageTime;
+
+		if (flTimeSinceDamage >= 5.0f) // No damage for 5 seconds
+		{
+			int nHealth = GetHealth();
+			int nMaxHealth = GetMaxHealth();
+
+			if (nHealth < nMaxHealth)
+			{
+				// Regenerate 1 HP per tick
+				int nNewHealth = MIN(nHealth + 1, nMaxHealth);
+				SetHealth(nNewHealth);
+			}
+		}
+	}
+
+
 	if ( m_flSendPickupWeaponMessageTime != -1.f && gpGlobals->curtime >= m_flSendPickupWeaponMessageTime )
 	{
 		CSingleUserRecipientFilter filter( this );
@@ -6948,13 +6968,19 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bAllowSpaw
 		return;
 	}
 
-	if ( TFGameRules()->IsMannVsMachineMode() && GetTeamNumber() == TF_TEAM_PVE_DEFENDERS )
+	if (TFGameRules()->IsMannVsMachineMode() && GetTeamNumber() == TF_TEAM_PVE_DEFENDERS)
 	{
-		if ( IsReadyToPlay() && !TFGameRules()->InSetup() && g_pPopulationManager && !g_pPopulationManager->IsInEndlessWaves() )
+		if (IsReadyToPlay() && !TFGameRules()->InSetup() && g_pPopulationManager && !g_pPopulationManager->IsInEndlessWaves())
 		{
-			ClientPrint( this, HUD_PRINTTALK, "#TF_MVM_NoClassChangeAfterSetup" );
+			ClientPrint(this, HUD_PRINTTALK, "#TF_MVM_NoClassChangeAfterSetup");
 			return;
 		}
+	}
+
+	if (TFGameRules()->WaveMode_IsActive() && TFGameRules()->Wave2_IsActiveForHUD() && GetTeamNumber() == TF_TEAM_RED)
+	{
+		// no respawning once a wavemode run has started - permadeath until the run ends
+		return;
 	}
 
 	int iClass = TF_CLASS_UNDEFINED;

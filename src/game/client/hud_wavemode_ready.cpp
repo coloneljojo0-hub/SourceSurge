@@ -30,7 +30,7 @@ CHudWaveModeReady::CHudWaveModeReady( const char *pElementName )
 
 	m_pTitleLabel = new vgui::Label( this, "WaveModeReady_Title", "WAVEMODE" );
 	m_pDifficultyLabel = new vgui::Label( this, "WaveModeReady_Difficulty", "" );
-	m_pReadyButton = new vgui::Button( this, "WaveModeReady_ReadyBtn", "READY UP", this, "wavemode_ready" );
+	m_pReadyButton = new vgui::Button( this, "WaveModeReady_ReadyBtn", "press F4", this, "wavemode_ready" );
 
 	for ( int i = 0; i < MAX_PLAYERS; i++ )
 	{
