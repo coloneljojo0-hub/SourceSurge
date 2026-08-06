@@ -92,6 +92,29 @@ void CHudWave2Status::OnThink()
 	V_snprintf( buf, sizeof(buf), "Enemies Remaining: %d", TFGameRules()->Wave2_GetBotsAliveForHUD() );
 	m_pEnemiesLabel->SetText( buf );
 
+	if (m_bBuffRolling)
+	{
+		float flRemaining = m_flBuffRollEndTime - gpGlobals->curtime;
+
+		if (flRemaining <= 0.0f)
+		{
+			// Stop rolling
+			m_bBuffRolling = false;
+			m_iCurrentRollBuff = m_iFinalBuff;
+		}
+		else
+		{
+			// Speed curve: fast → slow
+			float flSpeed = RemapVal(flRemaining, 2.0f, 0.0f, 0.02f, 0.35f);
+
+			if (gpGlobals->curtime >= m_flNextBuffRollTime)
+			{
+				m_iCurrentRollBuff = (m_iCurrentRollBuff + 1) % 3; // 3 buff types
+				m_flNextBuffRollTime = gpGlobals->curtime + flSpeed;
+			}
+		}
+	}
+
 	if ( TFGameRules()->Wave2_IsInCooldownForHUD() )
 	{
 		float flTimeLeft = TFGameRules()->Wave2_GetCooldownEndTimeForHUD() - gpGlobals->curtime;
@@ -103,16 +126,31 @@ void CHudWave2Status::OnThink()
 		m_pCooldownLabel->SetVisible( true );
 
 		int nBuff = TFGameRules()->Wave2_GetLastBuffTypeForHUD();
-		const char *pszBuffText = "";
-		switch ( nBuff )
+
+		// Start roll when buff changes
+		if (nBuff >= 0 && nBuff != m_iFinalBuff && !m_bBuffRolling)
 		{
-			case 0: pszBuffText = "Enemies gained MORE HEALTH"; break;
-			case 1: pszBuffText = "Enemies now DEAL MORE DAMAGE"; break;
-			case 2: pszBuffText = "Enemies gained MORE RESISTANCE"; break;
-			default: pszBuffText = ""; break;
+			m_bBuffRolling = true;
+			m_flBuffRollEndTime = gpGlobals->curtime + 2.0f; // roll duration
+			m_flNextBuffRollTime = gpGlobals->curtime;
+			m_iCurrentRollBuff = 0;
+			m_iFinalBuff = nBuff;
 		}
-		m_pBuffLabel->SetText( pszBuffText );
-		m_pBuffLabel->SetVisible( nBuff >= 0 );
+
+		int buffToShow = m_bBuffRolling ? m_iCurrentRollBuff : m_iFinalBuff;
+
+		const char* pszBuffText = "";
+		switch (buffToShow)
+		{
+		case 0: pszBuffText = "Enemies gained MORE HEALTH"; break;
+		case 1: pszBuffText = "Enemies now DEAL MORE DAMAGE"; break;
+		case 2: pszBuffText = "Enemies gained MORE RESISTANCE"; break;
+		default: pszBuffText = ""; break;
+		}
+
+		m_pBuffLabel->SetText(pszBuffText);
+		m_pBuffLabel->SetVisible(buffToShow >= 0);
+
 	}
 	else
 	{

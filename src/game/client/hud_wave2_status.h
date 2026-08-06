@@ -12,6 +12,12 @@
 class CHudWave2Status : public CHudElement, public vgui::EditablePanel
 {
 	DECLARE_CLASS_SIMPLE( CHudWave2Status, vgui::EditablePanel );
+	
+	float m_flBuffRollEndTime;
+	float m_flNextBuffRollTime;
+	bool m_bBuffRolling;
+	int m_iCurrentRollBuff;
+	int m_iFinalBuff;
 
 public:
 	CHudWave2Status( const char *pElementName );
