@@ -9683,55 +9683,39 @@ bool CTFGameRules::CheckWinLimit( bool bAllowEnd /*= true*/, int nAddValueWhenCh
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameRules::CheckRespawnWaves()
+void CTFGameRules::CheckRespawnWaves(void)
 {
-	BaseClass::CheckRespawnWaves();
-
-	// Look for overrides
-	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+	// During an active wavemode run, RED (the human players) never gets an
+	// automatic respawn wave - death is permanent until the run ends.
+	// BLUE (bots) still respawn normally via the base implementation.
+	if (WaveMode_IsActive() && Wave2_IsActiveForHUD())
 	{
-		CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
-		if ( !pTFPlayer )
-			continue;
-
-		if ( pTFPlayer->IsAlive() )
-			continue; 
-
-		if ( m_iRoundState == GR_STATE_PREROUND )
-			continue;
-
-		// Triggers can force a player to spawn at a specific time
-		if ( pTFPlayer->GetRespawnTimeOverride() != -1.f && 
-				gpGlobals->curtime > pTFPlayer->GetDeathTime() + pTFPlayer->GetRespawnTimeOverride() )
+		for (int team = LAST_SHARED_TEAM + 1; team < GetNumberOfTeams(); team++)
 		{
-			pTFPlayer->ForceRespawn();
-		}
-		else if ( IsPVEModeActive() )
-		{
-			// special stuff for PVE mode
-			if ( !ShouldRespawnQuickly( pTFPlayer ) )
+			if (team == TF_TEAM_RED)
 				continue;
 
-			// If the player hasn't been dead the minimum respawn time, he
-			// waits until the next wave.
-			if ( !HasPassedMinRespawnTime( pTFPlayer ) )
+			if (GetNextRespawnWave(team) && GetNextRespawnWave(team) > gpGlobals->curtime)
 				continue;
 
-			if ( !pTFPlayer->IsReadyToSpawn() )
+			RespawnTeam(team);
+
+			float flNextRespawnLength = GetRespawnWaveMaxLength(team);
+			if (flNextRespawnLength)
 			{
-				// Let the player spawn immediately when they do pick a class
-				if ( pTFPlayer->ShouldGainInstantSpawn() )
-				{
-					pTFPlayer->AllowInstantSpawn();
-				}
-				continue;
+				m_flNextRespawnWave.Set(team, gpGlobals->curtime + flNextRespawnLength);
 			}
-
-			// Respawn this player
-			pTFPlayer->ForceRespawn();
+			else
+			{
+				m_flNextRespawnWave.Set(team, 0.0f);
+			}
 		}
+		return;
 	}
+
+	BaseClass::CheckRespawnWaves();
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

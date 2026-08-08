@@ -11751,6 +11751,7 @@ void CTFPlayer::OnKilledOther_Effects( CBaseEntity *pVictim, const CTakeDamageIn
 //-----------------------------------------------------------------------------
 void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
+
 	CTFPlayer *pPlayerAttacker = NULL;
 	if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() )
 	{
@@ -12804,6 +12805,24 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 
 	BaseClass::Event_Killed( info_modified );
+
+	// --- WaveMode permanent death: move RED players to spectator ---
+	if (TFGameRules()->WaveMode_IsActive() && TFGameRules()->Wave2_IsActiveForHUD())
+	{
+		if (GetTeamNumber() == TF_TEAM_RED)
+		{
+			// Move player to spectator team
+			ChangeTeam(TEAM_SPECTATOR);
+
+			// Switch to observer mode (TF2 uses OBS_MODE_* enums)
+			StartObserverMode(OBS_MODE_ROAMING);
+
+			// Block respawn attempts
+			m_bAllowInstantSpawn = false;
+			m_flRespawnTimeOverride = -1.0f;
+		}
+	}
+
 
 	if ( !m_bSwitchedClass )
 	{
