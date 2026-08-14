@@ -491,6 +491,7 @@ public:
 
 	bool ShouldReEvaluateCurrentClass( void ) const;
 	void ReEvaluateCurrentClass( void );
+	void SetAsSpyDecoy( CTFPlayer *pOwner );
 
 private:		
 	CTFBotLocomotion	*m_locomotor;
@@ -578,6 +579,9 @@ private:
 	float m_flAutoJumpMin;
 	float m_flAutoJumpMax;
 	CountdownTimer m_autoJumpTimer;
+
+	bool m_bIsSpyDecoy;
+	CHandle< CTFPlayer > m_hSpyDecoyOwner;
 
 	CHandle< CCaptureFlag > m_hFollowingFlagTarget;
 

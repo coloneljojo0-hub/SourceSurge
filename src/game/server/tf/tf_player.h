@@ -322,6 +322,7 @@ public:
 	bool				CanAttack( int iCanAttackFlags = 0 );
 	bool				CanJump() const;
 	bool				TrySapperLongJump( Vector &vecVelocity );
+	bool				SpawnSpyDecoy();
 	bool				CanDuck() const;
 
 	void				RemoveMeleeCrit( void );

@@ -168,14 +168,8 @@ void CHudMenuSpyDisguise::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 bool CHudMenuSpyDisguise::ShouldDraw( void )
 {
-	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pPlayer )
-		return false;
-
-	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
-		return false;
-
-	return CHudBaseBuildMenu::ShouldDraw();
+	// The Spy PDA is repurposed as the decoy launcher in Source Surge.
+	return false;
 }
 
 //-----------------------------------------------------------------------------

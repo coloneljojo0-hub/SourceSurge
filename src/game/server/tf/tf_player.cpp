@@ -2753,10 +2753,6 @@ void CTFPlayer::CancelEurekaTeleport()
 bool CTFPlayer::TrySapperLongJump( Vector &vecVelocity )
 {
 	CTFWeaponBase *pActiveWeapon = GetActiveTFWeapon();
-	Msg( "[SourceSurge] Long jump check: weapon=%s id=%d cooldown=%.2f\n",
-		pActiveWeapon ? pActiveWeapon->GetClassname() : "none",
-		pActiveWeapon ? pActiveWeapon->GetWeaponID() : -1,
-		Max( 0.0f, m_flSapperLongJumpNextTime - gpGlobals->curtime ) );
 
 	if ( gpGlobals->curtime < m_flSapperLongJumpNextTime )
 		return false;
@@ -2769,7 +2765,38 @@ bool CTFPlayer::TrySapperLongJump( Vector &vecVelocity )
 	AngleVectors( EyeAngles(), &vecForward );
 	vecVelocity += vecForward * 650.0f;
 	m_flSapperLongJumpNextTime = gpGlobals->curtime + 5.0f;
-	Msg( "[SourceSurge] Sapper long jump activated.\n" );
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Create a stationary, red-team decoy at the Spy's current position.
+//-----------------------------------------------------------------------------
+bool CTFPlayer::SpawnSpyDecoy()
+{
+	static int s_nDecoyCount = 0;
+
+	char szName[64];
+	V_snprintf( szName, sizeof( szName ), "Spy Decoy %d", s_nDecoyCount++ );
+
+	CTFBot *pDecoy = NextBotCreatePlayerBot< CTFBot >( szName );
+	if ( !pDecoy )
+		return false;
+
+	pDecoy->ChangeTeam( TF_TEAM_RED, false, true );
+	pDecoy->SetDifficulty( CTFBot::EASY );
+	pDecoy->HandleCommand_JoinClass( "scout" );
+	pDecoy->SetAttribute( CTFBot::IGNORE_ENEMIES );
+	pDecoy->SetAttribute( CTFBot::SUPPRESS_FIRE );
+	pDecoy->SetAttribute( CTFBot::REMOVE_ON_DEATH );
+	pDecoy->SetBehaviorFlag( TFBOT_IGNORE_SCENARIO_GOALS );
+	pDecoy->ForceRespawn();
+
+	Vector vecSpawnOrigin = GetAbsOrigin();
+	QAngle angSpawnAngles = GetAbsAngles();
+	pDecoy->Teleport( &vecSpawnOrigin, &angSpawnAngles, &vec3_origin );
+	pDecoy->SetMoveType( MOVETYPE_NONE );
+	pDecoy->SetAsSpyDecoy( this );
 
 	return true;
 }

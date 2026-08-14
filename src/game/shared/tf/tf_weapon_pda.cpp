@@ -260,6 +260,24 @@ CHudBaseBuildMenu *CTFWeaponPDA_Spy::GetBuildMenu() const
 
 //==============================
 
+CTFWeaponPDA_Spy::CTFWeaponPDA_Spy()
+	: m_flNextDecoySpawnTime( 0.0f )
+{
+}
+
+void CTFWeaponPDA_Spy::PrimaryAttack( void )
+{
+#ifndef CLIENT_DLL
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner && gpGlobals->curtime >= m_flNextDecoySpawnTime && pOwner->SpawnSpyDecoy() )
+	{
+		m_flNextDecoySpawnTime = gpGlobals->curtime + 16.0f;
+	}
+#endif
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + 0.2f;
+}
+
 void CTFWeaponPDA_Spy::ItemPreFrame( void )
 {
 	BaseClass::ItemPreFrame();

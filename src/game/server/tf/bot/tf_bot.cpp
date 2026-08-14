@@ -26,6 +26,7 @@
 #include "tf_weapon_buff_item.h"
 #include "tf_weapon_lunchbox.h"
 #include "tf_weapon_medigun.h"
+#include "particle_parse.h"
 #include "func_respawnroom.h"
 #include "soundenvelope.h"
 
@@ -1379,6 +1380,8 @@ CTFBot::CTFBot()
 	m_squadFormationError = 0.0f;
 
 	m_hFollowingFlagTarget = NULL;
+	m_bIsSpyDecoy = false;
+	m_hSpyDecoyOwner = NULL;
 
 	SetShouldQuickBuild( false );
 	SetAutoJump( 0.f, 0.f );
@@ -1408,6 +1411,13 @@ CTFBot::~CTFBot()
 		delete m_vision;
 
 	m_suspectedSpyVector.PurgeAndDeleteElements();
+}
+
+//-----------------------------------------------------------------------------------------------------
+void CTFBot::SetAsSpyDecoy( CTFPlayer *pOwner )
+{
+	m_bIsSpyDecoy = true;
+	m_hSpyDecoyOwner = pOwner;
 }
 
 
@@ -1790,6 +1800,18 @@ void CTFBot::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------------------------------
 void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 {
+	if ( m_bIsSpyDecoy )
+	{
+		const Vector vecExplosion = GetAbsOrigin();
+		CBaseEntity *pAttacker = m_hSpyDecoyOwner.Get() ? static_cast< CBaseEntity * >( m_hSpyDecoyOwner.Get() ) : this;
+		CTakeDamageInfo explosionInfo( this, pAttacker, 125.0f, DMG_BLAST );
+		explosionInfo.SetDamagePosition( vecExplosion );
+		CTFRadiusDamageInfo radiusInfo( &explosionInfo, vecExplosion, 200.0f, this );
+		TFGameRules()->RadiusDamage( radiusInfo );
+		DispatchParticleEffect( "ExplosionCore_MidAir", vecExplosion, vec3_angle );
+		EmitSound( "Weapon_Grenade_Pipebomb.Explode" );
+	}
+
 	BaseClass::Event_Killed( info );
 
 	if ( HasProxy() )

@@ -121,6 +121,7 @@ public:
 	DECLARE_CLASS( CTFWeaponPDA_Spy, CTFWeaponPDA );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
+	CTFWeaponPDA_Spy();
 
 	virtual const char *GetPanelName() { return ""; }
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PDA_SPY; }
@@ -131,6 +132,7 @@ public:
 
 	virtual bool			CanBeSelected( void ) OVERRIDE;
 	virtual bool			VisibleInWeaponSelection( void ) OVERRIDE;
+	virtual void			PrimaryAttack( void ) OVERRIDE;
 
 	virtual void			ItemPreFrame( void );					// called each frame by the player PreThink
 	virtual void			ItemBusyFrame( void );					// called each frame by the player PostThink
@@ -138,6 +140,7 @@ public:
 
 	void	CheckDisguiseTimer( void );
 	void	ProcessDisguiseImpulse( void );
+	float	m_flNextDecoySpawnTime;
 };
 
 // ********************************************************************************************
