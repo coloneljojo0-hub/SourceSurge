@@ -321,6 +321,7 @@ public:
 
 	bool				CanAttack( int iCanAttackFlags = 0 );
 	bool				CanJump() const;
+	bool				TrySapperLongJump( Vector &vecVelocity );
 	bool				CanDuck() const;
 
 	void				RemoveMeleeCrit( void );
@@ -1523,6 +1524,7 @@ private:
 	bool	m_bSlamArmed;
 	float	m_flAirborneStartTime;
 	bool	m_bWasOnGroundLastTick;
+	float	m_flSapperLongJumpNextTime;
 
 	bool PickupWeaponFromOther( CTFDroppedWeapon *pDroppedWeapon );
 	bool TryToPickupDroppedWeapon();

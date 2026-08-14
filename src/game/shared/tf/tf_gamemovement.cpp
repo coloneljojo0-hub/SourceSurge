@@ -1362,6 +1362,12 @@ bool CTFGameMovement::CheckJumpButton()
 	// Apply gravity.
 	FinishGravity();
 
+#ifdef GAME_DLL
+	// This must run in the jump handler, not PostThink: by this point the normal
+	// jump is confirmed and the movement velocity is still being simulated.
+	m_pTFPlayer->TrySapperLongJump( mv->m_vecVelocity );
+#endif
+
 	// Save the output data for the physics system to react to if need be.
 	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - flStartZ;
 	mv->m_outStepHeight += 0.15f;

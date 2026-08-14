@@ -30,10 +30,14 @@
 	}
 	"surge_sandbox"
 	{
-		"viewed"		"33"
+		"viewed"		"38"
 	}
 	"surge_city"
 	{
-		"viewed"		"3"
+		"viewed"		"4"
+	}
+	"vsh_seine_v3"
+	{
+		"viewed"		"1"
 	}
 }

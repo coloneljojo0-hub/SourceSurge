@@ -305,6 +305,11 @@ public:
 class CTFGameRules : public CTeamplayRoundBasedRules
 {
 public:
+	// --- WaveMode custom functions ---
+	bool AreAllRedPlayersDead();
+	void Wave2_RestartLastDifficulty();
+
+
 	DECLARE_CLASS( CTFGameRules, CTeamplayRoundBasedRules );
 
 	CTFGameRules();
@@ -1034,6 +1039,9 @@ public:
 
 	int GetTeamAssignmentOverride( CTFPlayer *pTFPlayer, int iDesiredTeam, bool bAutoBalance = false );
 private:
+	int m_iLastWaveDifficulty;
+	int m_iWave2Kills;
+	int m_iWave2Damage;
 
 	void ChooseNextMapVoteOptions();
 
@@ -1072,6 +1080,7 @@ public:
 	bool	Wave2_IsActive(void) const { return m_bWave2Active; }
 	void	WaveMode_SetActive(bool bActive, int nDifficulty);
 	void	WaveMode_Think(void);
+	void	WaveMode_AddKill(void) { m_nWaveModeKills_Net.Set(m_nWaveModeKills_Net + 1); }
 	void	Wave2_Start(int nDifficulty);
 	void	Wave2_Stop(void);
 	void	Wave2_Think(void);
@@ -1242,6 +1251,9 @@ private:
 	CNetworkVar(bool, m_bWaveModeActive_Net);		// separate net copy, since m_bWaveModeActive is GAME_DLL only
 	CNetworkArray(bool, m_bWaveModeReady_Net, MAX_PLAYERS + 1);	// per-player-slot ready flags for wavemode ready-up
 	CNetworkVar(float, m_flWaveModeCountdownEndTime_Net);	// -1 = no countdown running
+	CNetworkVar(int, m_nWaveModeKills_Net);
+	CNetworkVar(bool, m_bWaveModeGameOver_Net);
+	CNetworkVar(int, m_nWaveModeDifficulty_Net);	// client-visible copy, since m_nWaveModeDifficulty is GAME_DLL only
 	CNetworkVar(bool, m_bWave2InCooldown_Net);
 	CNetworkVar(float, m_flWave2CooldownEndTime_Net);
 	CNetworkVar(int, m_nWave2LastBuffType);         // -1 = none yet, 0 = health, 1 = damage, 2 = resist
@@ -1251,6 +1263,9 @@ private:
 		bool	WaveMode_IsPlayerReady(int nEntIndex) const { return (nEntIndex > 0 && nEntIndex <= MAX_PLAYERS) ? m_bWaveModeReady_Net[nEntIndex] : false; }
 		void	WaveMode_SetPlayerReady(int nEntIndex, bool bReady) { if (nEntIndex > 0 && nEntIndex <= MAX_PLAYERS) m_bWaveModeReady_Net.Set(nEntIndex, bReady); }
 		float	WaveMode_GetCountdownEndTimeForHUD(void) const { return m_flWaveModeCountdownEndTime_Net; }
+		int		WaveMode_GetKillsForHUD(void) const { return m_nWaveModeKills_Net; }
+		bool	WaveMode_IsGameOver(void) const { return m_bWaveModeGameOver_Net; }
+		int		WaveMode_GetDifficultyForHUD(void) const { return m_nWaveModeDifficulty_Net; }
 		int     Wave2_GetCurrentWaveForHUD(void) const { return m_nWave2CurrentWave; }
 		int		Wave2_GetBotsAliveForHUD(void) const { return m_nWave2BotsAliveCount; }
 		bool	Wave2_IsInCooldownForHUD(void) const { return m_bWave2InCooldown_Net; }

@@ -1429,6 +1429,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool(RECVINFO(m_bWaveModeActive_Net)),
 	RecvPropArray3(RECVINFO_ARRAY(m_bWaveModeReady_Net), RecvPropBool(RECVINFO(m_bWaveModeReady_Net[0]))),
 	RecvPropTime(RECVINFO(m_flWaveModeCountdownEndTime_Net)),
+	RecvPropInt(RECVINFO(m_nWaveModeKills_Net)),
+	RecvPropBool(RECVINFO(m_bWaveModeGameOver_Net)),
+	RecvPropInt(RECVINFO(m_nWaveModeDifficulty_Net)),
 	RecvPropInt(RECVINFO(m_nGameType)),
 	RecvPropInt( RECVINFO( m_nStopWatchState ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
@@ -1515,6 +1518,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool(SENDINFO(m_bWaveModeActive_Net)),
 	SendPropArray3(SENDINFO_ARRAY3(m_bWaveModeReady_Net), SendPropBool(SENDINFO_ARRAY(m_bWaveModeReady_Net))),
 	SendPropTime(SENDINFO(m_flWaveModeCountdownEndTime_Net)),
+	SendPropInt(SENDINFO(m_nWaveModeKills_Net)),
+	SendPropBool(SENDINFO(m_bWaveModeGameOver_Net)),
+	SendPropInt(SENDINFO(m_nWaveModeDifficulty_Net)),
 
 //=============================================================================
 // HPE_BEGIN:
@@ -3489,6 +3495,9 @@ CTFGameRules::CTFGameRules()
 	m_nWaveModeDifficulty = 0;
 	m_bWaveModeActive_Net.Set(false);
 	m_flWaveModeCountdownEndTime_Net.Set(-1.0f);
+	m_nWaveModeKills_Net.Set(0);
+	m_bWaveModeGameOver_Net.Set(false);
+	m_nWaveModeDifficulty_Net.Set(0);
 	for (int nSlot = 0; nSlot <= MAX_PLAYERS; nSlot++)
 	{
 		m_bWaveModeReady_Net.Set(nSlot, false);
@@ -7691,40 +7700,46 @@ float CTFGameRules::ApplyOnDamageAliveModifyRules( const CTakeDamageInfo &info, 
 					{
 						pTFAttacker->TakeHealth( ( flRealDamage * 1.25f ), DMG_GENERIC );
 					}
-					else if ( info.GetDamageType() & DMG_BLAST )
+					else if (info.GetDamageType() & DMG_BLAST)
 					{
 						int iMaxHealthOverboost = 120;
-						if ( ( pTFAttacker->GetHealth() - pTFAttacker->GetMaxHealth() ) < iMaxHealthOverboost )
+						if ((pTFAttacker->GetHealth() - pTFAttacker->GetMaxHealth()) < iMaxHealthOverboost)
 						{
-							int iMaxHealthToAdd = ( iMaxHealthOverboost + pTFAttacker->GetMaxHealth() ) - pTFAttacker->GetHealth();
-							if ( flRealDamage < iMaxHealthToAdd )
+							int iMaxHealthToAdd = (iMaxHealthOverboost + pTFAttacker->GetMaxHealth()) - pTFAttacker->GetHealth();
+
+							if (flRealDamage < iMaxHealthToAdd)
 							{
-								pTFAttacker->TakeHealth( flRealDamage, DMG_IGNORE_MAXHEALTH );
+								pTFAttacker->TakeHealth((int)flRealDamage, DMG_IGNORE_MAXHEALTH);
 							}
 							else
-								pTFAttacker->TakeHealth( iMaxHealthToAdd, DMG_IGNORE_MAXHEALTH );
+							{
+								int iHealAmount = iMaxHealthToAdd;
+								pTFAttacker->TakeHealth(iHealAmount, DMG_IGNORE_MAXHEALTH);
+							}
+							if (m_bWaveModeActive && Wave2_IsActiveForHUD() && pTFAttacker->GetTeamNumber() == TF_TEAM_RED)
+							{
+								WaveMode_AddKill();
+							}
 						}
 					}
-					else
-					{
-						pTFAttacker->TakeHealth( flRealDamage, DMG_GENERIC );
-					}
 				}
-			}
 
 			int iHypeOnDamage = 0;
+
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker, iHypeOnDamage, hype_on_damage );
 			if ( iHypeOnDamage )
 			{
 				float flHype = RemapValClamped( flRealDamage, 1.f, 200.f, 1.f, 50.f );
 				pTFAttacker->m_Shared.SetScoutHypeMeter( Min( 100.f, flHype + pTFAttacker->m_Shared.GetScoutHypeMeter() ) );
+			
 			}
+			
 		}
+	}
 	}
 
 	return flRealDamage;
 }
-
 // --------------------------------------------------------------------------------------------------- //
 // Voice helper
 // --------------------------------------------------------------------------------------------------- //
@@ -9714,6 +9729,31 @@ void CTFGameRules::CheckRespawnWaves(void)
 	}
 
 	BaseClass::CheckRespawnWaves();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: check for dead players
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AreAllRedPlayersDead()
+{
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		CTFPlayer* pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
+		if (!pPlayer)
+			continue;
+
+		if (pPlayer->GetTeamNumber() != TF_TEAM_RED)
+			continue;
+
+		// RED player alive or not spectator → not all dead
+		if (pPlayer->IsAlive())
+			return false;
+
+		if (pPlayer->GetTeamNumber() != TEAM_SPECTATOR)
+			return false;
+	}
+
+	return true;
 }
 
 
@@ -22762,6 +22802,28 @@ CON_COMMAND_F(tf_wavemode_ready, "Toggle your ready state for Wavemode.", FCVAR_
 
 }
 
+CON_COMMAND_F(tf_wavemode_retry, "Reset Wavemode after a game over so players can ready up again.", FCVAR_GAMEDLL)
+{
+	if (!TFGameRules() || !TFGameRules()->WaveMode_IsGameOver())
+		return;
+
+	int nDifficulty = TFGameRules()->WaveMode_GetDifficultyForHUD();
+	TFGameRules()->WaveMode_SetActive(true, nDifficulty);
+
+	for (int i = 1; i <= MAX_PLAYERS; i++)
+	{
+		CBasePlayer* pPlayer = UTIL_PlayerByIndex(i);
+		CTFPlayer* pTFPlayer = ToTFPlayer(pPlayer);
+		if (!pTFPlayer)
+			continue;
+
+		if (pTFPlayer->GetTeamNumber() == TF_TEAM_RED)
+		{
+			pTFPlayer->ForceRespawn();
+		}
+	}
+}
+
 CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival gamemode. Usage: tf_wavemode_start <hard|harder|hardest>", FCVAR_GAMEDLL | FCVAR_CHEAT)
 {
 	if (args.ArgC() < 2)
@@ -23168,6 +23230,9 @@ void CTFGameRules::WaveMode_SetActive(bool bActive, int nDifficulty)
 	m_bWaveModeActive = bActive;
 	m_bWaveModeActive_Net = bActive;
 	m_nWaveModeDifficulty = nDifficulty;
+	m_nWaveModeDifficulty_Net.Set(nDifficulty);
+	m_nWaveModeKills_Net.Set(0);
+	m_bWaveModeGameOver_Net.Set(false);
 
 	for (int i = 0; i <= MAX_PLAYERS; i++)
 	{
@@ -23177,13 +23242,51 @@ void CTFGameRules::WaveMode_SetActive(bool bActive, int nDifficulty)
 
 void CTFGameRules::WaveMode_Think(void)
 {
-	if (!m_bWaveModeActive || m_bWave2Active)
+	if (!m_bWaveModeActive)
 		return;
+
+	if (m_bWave2Active)
+	{
+		// wave is running - watch for every RED player being dead
+		CUtlVector<CTFPlayer*> playerVector;
+		CollectPlayers(&playerVector);
+
+		bool bAnyRedConnected = false;
+		bool bAnyRedAlive = false;
+
+		FOR_EACH_VEC(playerVector, i)
+		{
+			CTFPlayer* pPlayer = playerVector[i];
+			if (!pPlayer || pPlayer->IsBot() || pPlayer->IsFakeClient())
+				continue;
+
+			if (pPlayer->GetTeamNumber() != TF_TEAM_RED)
+				continue;
+
+			bAnyRedConnected = true;
+
+			if (pPlayer->IsAlive())
+			{
+				bAnyRedAlive = true;
+				break;
+			}
+		}
+
+		if (bAnyRedConnected && !bAnyRedAlive)
+		{
+			Wave2_Stop();
+			m_bWaveModeGameOver_Net.Set(true);
+		}
+
+		return;
+	}
 
 	CUtlVector<CTFPlayer*> playerVector;
 	CollectPlayers(&playerVector);
 
-	bool bAllRedReady = false;
+	// Determine whether there is at least one connected RED player and whether all RED players are ready
+	bool bAnyRedConnected = false;
+	bool bAllRedReady = true;
 
 	FOR_EACH_VEC(playerVector, i)
 	{
@@ -23194,7 +23297,7 @@ void CTFGameRules::WaveMode_Think(void)
 		if (pPlayer->GetTeamNumber() != TF_TEAM_RED)
 			continue;
 
-		bAllRedReady = true; // at least one real RED player exists
+		bAnyRedConnected = true;
 
 		if (!WaveMode_IsPlayerReady(pPlayer->entindex()))
 		{
@@ -23202,6 +23305,29 @@ void CTFGameRules::WaveMode_Think(void)
 			break;
 		}
 	}
+
+	// Only start countdown if at least one RED player exists and all RED players are ready
+	if (bAnyRedConnected && bAllRedReady)
+	{
+		// start (or continue) the 5 second countdown
+		if (m_flWaveModeCountdownEndTime_Net < 0.0f)
+		{
+			m_flWaveModeCountdownEndTime_Net.Set(gpGlobals->curtime + 5.0f);
+		}
+		else if (gpGlobals->curtime >= m_flWaveModeCountdownEndTime_Net)
+		{
+			Wave2_Start(m_nWaveModeDifficulty);
+		}
+	}
+	else
+	{
+		// someone un-readied or no RED players connected - cancel any running countdown
+		if (m_flWaveModeCountdownEndTime_Net >= 0.0f)
+		{
+			m_flWaveModeCountdownEndTime_Net.Set(-1.0f);
+		}
+	}
+
 
 	if (bAllRedReady)
 	{

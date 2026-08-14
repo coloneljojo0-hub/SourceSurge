@@ -991,6 +991,7 @@ CTFPlayer::CTFPlayer()
 	m_bSlamArmed = false;
 	m_flAirborneStartTime = 0.0f;
 	m_bWasOnGroundLastTick = true;
+	m_flSapperLongJumpNextTime = 0.0f;
 
 	m_pAttributes = this;
 
@@ -2744,6 +2745,33 @@ void CTFPlayer::CancelEurekaTeleport()
 {
 	m_bIsTeleportingUsingEurekaEffect = false;
 	m_teleportHomeFlashTimer.Invalidate();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Apply the sapper's forward jump boost when it is available.
+//-----------------------------------------------------------------------------
+bool CTFPlayer::TrySapperLongJump( Vector &vecVelocity )
+{
+	CTFWeaponBase *pActiveWeapon = GetActiveTFWeapon();
+	Msg( "[SourceSurge] Long jump check: weapon=%s id=%d cooldown=%.2f\n",
+		pActiveWeapon ? pActiveWeapon->GetClassname() : "none",
+		pActiveWeapon ? pActiveWeapon->GetWeaponID() : -1,
+		Max( 0.0f, m_flSapperLongJumpNextTime - gpGlobals->curtime ) );
+
+	if ( gpGlobals->curtime < m_flSapperLongJumpNextTime )
+		return false;
+
+	CTFWeaponBuilder *pBuilder = dynamic_cast< CTFWeaponBuilder * >( pActiveWeapon );
+	if ( !pBuilder || pBuilder->GetType() != OBJ_ATTACHMENT_SAPPER )
+		return false;
+
+	Vector vecForward;
+	AngleVectors( EyeAngles(), &vecForward );
+	vecVelocity += vecForward * 650.0f;
+	m_flSapperLongJumpNextTime = gpGlobals->curtime + 5.0f;
+	Msg( "[SourceSurge] Sapper long jump activated.\n" );
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -12806,7 +12834,24 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	BaseClass::Event_Killed( info_modified );
 
-	// --- WaveMode permanent death: move RED players to spectator ---
+	// perma death + gameoverscreen
+	if (TFGameRules()->WaveMode_IsActive() && TFGameRules()->Wave2_IsActiveForHUD())
+	{
+		if (GetTeamNumber() == TF_TEAM_RED)
+		{
+			// Move player to spectator team
+			ChangeTeam(TEAM_SPECTATOR);
+
+			// Switch to observer mode
+			StartObserverMode(OBS_MODE_ROAMING);
+
+			// Block respawn attempts
+			m_bAllowInstantSpawn = false;
+			m_flRespawnTimeOverride = -1.0f;
+		}
+	}
+
+
 	if (TFGameRules()->WaveMode_IsActive() && TFGameRules()->Wave2_IsActiveForHUD())
 	{
 		if (GetTeamNumber() == TF_TEAM_RED)
