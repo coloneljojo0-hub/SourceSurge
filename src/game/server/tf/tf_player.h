@@ -1368,6 +1368,11 @@ private:
 
 public:
 
+	// True if this player is a spawn-spy-decoy bot (a static bait dummy).
+	// These bots must bypass wavemode respawn/permadeath gates so they can
+	// be summoned as a target dummy even while a wave is running.
+	bool				IsSpyDecoy( void ) const;
+
 	float				GetDesiredHeadScale() const;
 	float				GetHeadScaleSpeed() const;
 	float				GetDesiredTorsoScale() const;

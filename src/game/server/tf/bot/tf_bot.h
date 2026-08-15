@@ -492,6 +492,7 @@ public:
 	bool ShouldReEvaluateCurrentClass( void ) const;
 	void ReEvaluateCurrentClass( void );
 	void SetAsSpyDecoy( CTFPlayer *pOwner );
+	bool IsSpyDecoy( void ) const { return m_bIsSpyDecoy; }
 
 private:		
 	CTFBotLocomotion	*m_locomotor;

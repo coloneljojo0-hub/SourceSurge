@@ -5218,6 +5218,12 @@ bool CTFGameRules::FPlayerCanRespawn(CBasePlayer* pPlayer)
 {
 	if (WaveMode_IsActive() && Wave2_IsActiveForHUD())
 	{
+		// Spy-decoy bots are static bait dummies and must be allowed to spawn
+		// even mid-wave, otherwise the decoy silently fails to join.
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+		if ( pTFPlayer && pTFPlayer->IsSpyDecoy() )
+			return true;
+
 		return false;
 	}
 

@@ -22,14 +22,18 @@ extern ConVar tf_bot_debug_spy;
 //---------------------------------------------------------------------------------------------
 ActionResult< CTFBot >	CTFBotSpyLurk::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	// cloak 
-	if ( !me->m_Shared.IsStealthed() )
+	// Source Surge: decoy bots must not cloak or disguise — they are static bots for enemy aggro.
+	if ( !me->IsSpyDecoy() )
 	{
-		me->PressAltFireButton();
-	}
+		// cloak
+		if ( !me->m_Shared.IsStealthed() )
+		{
+			me->PressAltFireButton();
+		}
 
-	// disguise as the enemy team
-	me->DisguiseAsMemberOfEnemyTeam();
+		// disguise as the enemy team
+		me->DisguiseAsMemberOfEnemyTeam();
+	}
 
 	m_lurkTimer.Start( RandomFloat( 3.0f, 5.0f ) );
 

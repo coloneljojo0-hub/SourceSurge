@@ -2785,6 +2785,13 @@ bool CTFPlayer::SpawnSpyDecoy()
 
 	pDecoy->ChangeTeam( TF_TEAM_RED, false, true );
 	pDecoy->SetDifficulty( CTFBot::EASY );
+
+	// Mark as a decoy BEFORE the spawn/class-join pipeline runs. The wave-mode
+	// respawn/permadeath gates (FPlayerCanRespawn, HandleCommand_JoinClass)
+	// query IsSpyDecoy() to know whether to bypass the wave block, so the flag
+	// has to be set before HandleCommand_JoinClass/ForceRespawn execute.
+	pDecoy->SetAsSpyDecoy( this );
+
 	pDecoy->HandleCommand_JoinClass( "scout" );
 	pDecoy->SetAttribute( CTFBot::IGNORE_ENEMIES );
 	pDecoy->SetAttribute( CTFBot::SUPPRESS_FIRE );
@@ -2796,13 +2803,25 @@ bool CTFPlayer::SpawnSpyDecoy()
 	QAngle angSpawnAngles = GetAbsAngles();
 	pDecoy->Teleport( &vecSpawnOrigin, &angSpawnAngles, &vec3_origin );
 	pDecoy->SetMoveType( MOVETYPE_NONE );
-	pDecoy->SetAsSpyDecoy( this );
 
 	return true;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Returns true if this player is a CTFBot flagged as a spawn-spy-decoy
+//			bait dummy. Forwarded to the bot so wave-mode respawn/permadeath
+//			gates can exempt the decoy (it must be summonnable even mid-wave).
+//-----------------------------------------------------------------------------
+bool CTFPlayer::IsSpyDecoy( void ) const
+{
+	if ( !IsBotOfType( TF_BOT_TYPE ) )
+		return false;
+
+	return ToTFBot( const_cast< CTFPlayer * >( this ) )->IsSpyDecoy();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFPlayer::PostThink()
 {
@@ -6939,7 +6958,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bAllowSpaw
 		return;
 	}
 
-	if (ShouldForceSpyForPlayer(GetTeamNumber()))
+	if (ShouldForceSpyForPlayer(GetTeamNumber()) && !IsBot())
 	{
 		pClassName = "spy";
 	}
@@ -7034,8 +7053,13 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bAllowSpaw
 
 	if (TFGameRules()->WaveMode_IsActive() && TFGameRules()->Wave2_IsActiveForHUD() && GetTeamNumber() == TF_TEAM_RED)
 	{
-		// no respawning once a wavemode run has started - permadeath until the run ends
-		return;
+		// no respawning once a wavemode run has started
+		// EXCEPT decoys 
+		if (!IsSpyDecoy())
+		{
+			return;
+		}
+		
 	}
 
 	int iClass = TF_CLASS_UNDEFINED;
@@ -12883,15 +12907,21 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	{
 		if (GetTeamNumber() == TF_TEAM_RED)
 		{
-			// Move player to spectator team
-			ChangeTeam(TEAM_SPECTATOR);
+			// Spy-decoy bots are static bait dummies and must NOT be moved to
+			// spectator or have respawn blocked on death; they are managed
+			// entirely by SpawnSpyDecoy() / REMOVE_ON_DEATH.
+			if ( !IsSpyDecoy() )
+			{
+				// Move player to spectator team
+				ChangeTeam(TEAM_SPECTATOR);
 
-			// Switch to observer mode (TF2 uses OBS_MODE_* enums)
-			StartObserverMode(OBS_MODE_ROAMING);
+				// Switch to observer mode
+				StartObserverMode(OBS_MODE_ROAMING);
 
-			// Block respawn attempts
-			m_bAllowInstantSpawn = false;
-			m_flRespawnTimeOverride = -1.0f;
+				// Block respawn attempts
+				m_bAllowInstantSpawn = false;
+				m_flRespawnTimeOverride = -1.0f;
+			}
 		}
 	}
 
