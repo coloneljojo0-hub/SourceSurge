@@ -1073,7 +1073,7 @@ private:
 
 	// --- Wavemode gamemode ---
 	bool	m_bWaveModeActive;
-	int		m_nWaveModeDifficulty;				  // 0=hard, 1=harder, 2=hardest - same convention as m_nWave2Difficulty
+	int		m_nWaveModeDifficulty;			// 0=hard, 1=harder, 2=hardest, 3=nohit
 	
 public:
 	bool	m_bWavesEnabled;

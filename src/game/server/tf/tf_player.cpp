@@ -9090,6 +9090,25 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
+	// nohit difficulty: any hit from a wave bot kills the player instantly.
+	// Fall damage is explicitly exempted — players can still fall to their death.
+	if ( TFGameRules() && TFGameRules()->WaveMode_IsActive() && TFGameRules()->Wave2_IsActiveForHUD() )
+	{
+		if ( TFGameRules()->WaveMode_GetDifficultyForHUD() == 3 ) // nohit
+		{
+			if ( GetTeamNumber() == TF_TEAM_RED && pTFAttacker && TFGameRules()->Wave2_IsWaveBot( pTFAttacker ) )
+			{
+				if ( !(info.GetDamageType() & DMG_FALL) )
+				{
+					// Use CommitSuicide instead of TakeDamage to avoid infinite recursion —
+					// OnTakeDamageLive -> TakeDamage -> OnTakeDamageLive loop.
+					CommitSuicide( false, true );
+					return 0;
+				}
+			}
+		}
+	}
+
 	bool bDebug = tf_debug_damage.GetBool();
 
 	// If attacker has Strength Powerup Rune, apply damage multiplier, but not if you're a building or a crit

@@ -27,7 +27,7 @@ void DiscordRPC_Init()
     memset(&presence, 0, sizeof(presence));
 
     presence.details = "SOURCE SURGE";
-    presence.state = "mouvmenting around ☄";
+    presence.state = "sv_airaccelerate 70";
     presence.startTimestamp = g_flDiscordStartTime;
     presence.largeImageKey = "logo"; // must match an asset key you upload on the Discord Dev Portal
 

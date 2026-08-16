@@ -279,7 +279,7 @@ public:
 			return false;
 
 		UpdateStats();
-		return CHudElement::ShouldDraw();
+		return true;  // TEMP: bypass CHudElement::ShouldDraw() to isolate the bug
 	}
 
 	void UpdateStats()

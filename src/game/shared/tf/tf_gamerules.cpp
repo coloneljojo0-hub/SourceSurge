@@ -22767,7 +22767,7 @@ void CTFGameRules::RegisterScriptFunctions()
 // ============================================================================
 #ifdef GAME_DLL
 
-CON_COMMAND_F(tf_wave2_start, "Start the wave 2 bot system. Usage: tf_wave2_start <hard|harder|hardest>", FCVAR_GAMEDLL | FCVAR_CHEAT)
+CON_COMMAND_F(tf_wave2_start, "Start the wave 2 bot system. Usage: tf_wave2_start <hard|harder|hardest|nohit>", FCVAR_GAMEDLL | FCVAR_CHEAT)
 {
 	if (!UTIL_IsCommandIssuedByServerAdmin())
 		return;
@@ -22779,6 +22779,8 @@ CON_COMMAND_F(tf_wave2_start, "Start the wave 2 bot system. Usage: tf_wave2_star
 			nDifficulty = 1;
 		else if (!Q_stricmp(args.Arg(1), "hardest"))
 			nDifficulty = 2;
+		else if (!Q_stricmp(args.Arg(1), "nohit"))
+			nDifficulty = 3;
 	}
 
 	TFGameRules()->Wave2_Start(nDifficulty);
@@ -22830,11 +22832,11 @@ CON_COMMAND_F(tf_wavemode_retry, "Reset Wavemode after a game over so players ca
 	}
 }
 
-CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival gamemode. Usage: tf_wavemode_start <hard|harder|hardest>", FCVAR_GAMEDLL | FCVAR_CHEAT)
+CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival gamemode. Usage: tf_wavemode_start <hard|harder|hardest|nohit>", FCVAR_GAMEDLL | FCVAR_CHEAT)
 {
 	if (args.ArgC() < 2)
 	{
-		Warning("Usage: tf_wavemode_start <hard|harder|hardest>\n");
+		Warning("Usage: tf_wavemode_start <hard|harder|hardest|nohit>\n");
 		return;
 	}
 
@@ -22845,9 +22847,11 @@ CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival ga
 		nDifficulty = 1;
 	else if (!Q_stricmp(args[1], "hardest"))
 		nDifficulty = 2;
+	else if (!Q_stricmp(args[1], "nohit"))
+		nDifficulty = 3;
 	else
 	{
-		Warning("Unknown difficulty '%s'. Use hard, harder, or hardest.\n", args[1]);
+		Warning("Unknown difficulty '%s'. Use hard, harder, hardest, or nohit.\n", args[1]);
 		return;
 	}
 
@@ -23280,10 +23284,11 @@ void CTFGameRules::WaveMode_Think(void)
 
 		if (bAnyRedConnected && !bAnyRedAlive)
 		{
+			Msg("[WaveMode DEBUG] All RED dead - triggering game over\n");
 			Wave2_Stop();
 			m_bWaveModeGameOver_Net.Set(true);
 		}
-
+		Msg("[WaveMode DEBUG] bAnyRedConnected=%d bAnyRedAlive=%d\n", bAnyRedConnected, bAnyRedAlive);
 		return;
 	}
 
