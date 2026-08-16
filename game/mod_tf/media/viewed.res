@@ -30,7 +30,7 @@
 	}
 	"surge_sandbox"
 	{
-		"viewed"		"50"
+		"viewed"		"57"
 	}
 	"surge_city"
 	{

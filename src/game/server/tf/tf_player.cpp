@@ -9100,9 +9100,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				if ( !(info.GetDamageType() & DMG_FALL) )
 				{
-					// Use CommitSuicide instead of TakeDamage to avoid infinite recursion —
-					// OnTakeDamageLive -> TakeDamage -> OnTakeDamageLive loop.
-					CommitSuicide( false, true );
+					// Only kill if the player is actually alive.
+					// Calling CommitSuicide on someone mid-transition can trigger
+					// StateThinkOBSERVER with m_lifeState != LIFE_DEAD (assert fail).
+					if ( IsAlive() )
+					{
+						CommitSuicide( false, true );
+					}
 					return 0;
 				}
 			}

@@ -133,6 +133,7 @@ extern ConVar sc_look_sensitivity_scale;
 
 extern bool TournamentHudElementKeyInput(int down, ButtonCode_t keynum, const char* pszCurrentBinding);
 extern bool WaveModeHudElementKeyInput(int down, ButtonCode_t keynum, const char* pszCurrentBinding);
+extern bool WaveModeGameOverHudElementKeyInput(int down, ButtonCode_t keynum, const char* pszCurrentBinding);
 extern bool ArenaClassLayoutKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
 extern bool CoachingHandlesKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
 extern bool ItemTestHandlesKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
@@ -1574,6 +1575,9 @@ int	ClientModeTFNormal::HudElementKeyInput( int down, ButtonCode_t keynum, const
 		return 0;
 
 	if (WaveModeHudElementKeyInput(down, keynum, pszCurrentBinding) == true)
+		return 0;
+
+	if (WaveModeGameOverHudElementKeyInput(down, keynum, pszCurrentBinding) == true)
 		return 0;
 
 	if ( ArenaClassLayoutKeyInput( down, keynum, pszCurrentBinding ) == true )

@@ -20,6 +20,8 @@ bool WaveModeHudElementKeyInput(int down, ButtonCode_t keynum, const char* pszCu
 	return false;
 }
 
+// ============================================================================
+
 CHudWaveModeReady::CHudWaveModeReady( const char *pElementName )
 	: CHudElement( pElementName ), BaseClass( NULL, "HudWaveModeReady" )
 {
@@ -30,7 +32,7 @@ CHudWaveModeReady::CHudWaveModeReady( const char *pElementName )
 
 	m_pTitleLabel = new vgui::Label( this, "WaveModeReady_Title", "WAVEMODE" );
 	m_pDifficultyLabel = new vgui::Label( this, "WaveModeReady_Difficulty", "" );
-	m_pReadyButton = new vgui::Button( this, "WaveModeReady_ReadyBtn", "press F4", this, "wavemode_ready" );
+	m_pReadyButton = new vgui::Button( this, "WaveModeReady_ReadyBtn", "ready up - F4", this, "wavemode_ready" );
 
 	for ( int i = 0; i < MAX_PLAYERS; i++ )
 	{
@@ -72,7 +74,7 @@ void CHudWaveModeReady::ApplySchemeSettings( IScheme *pScheme )
 		m_pPlayerRows[i]->SetPaintBackgroundEnabled( false );
 	}
 
-	m_pReadyButton->SetFont( hFontTitle );
+	m_pReadyButton->SetFont( hFontRow );
 }
 
 void CHudWaveModeReady::PerformLayout()
@@ -100,7 +102,7 @@ void CHudWaveModeReady::PerformLayout()
 		}
 	}
 
-	m_pReadyButton->SetBounds( ( panelWide - 160 ) / 2, panelTall - 50, 160, 36 );
+	m_pReadyButton->SetBounds( ( panelWide - 200 ) / 2, panelTall - 50, 200, 36 );
 }
 
 bool CHudWaveModeReady::ShouldDraw()
@@ -141,7 +143,7 @@ void CHudWaveModeReady::OnThink()
 	}
 	else
 	{
-		m_pDifficultyLabel->SetText("Press Ready when your team is set");
+		m_pDifficultyLabel->SetText( "Press Ready when your team is set" );
 		m_pDifficultyLabel->SetFgColor(Color(205, 149, 12, 255));
 	}
 
@@ -229,93 +231,20 @@ public:
 		SetHiddenBits(HIDEHUD_MISCSTATUS);
 
 		m_pStatsLabel = new vgui::Label(this, "WaveModeGameOver_Stats", "");
-		m_pRetryButton = new vgui::Button(this, "WaveModeGameOver_Retry", "Retry", this, "wavemode_retry");
-		m_pMenuButton = new vgui::Button(this, "WaveModeGameOver_Menu", "Main Menu", this, "wavemode_menu");
+		m_pRetryButton = new vgui::Button(this, "WaveModeGameOver_Retry", "retry - F3", this, "wavemode_retry");
+		m_pMenuButton = new vgui::Button(this, "WaveModeGameOver_Menu", "quit - F4", this, "wavemode_menu");
 
 		SetKeyBoardInputEnabled(false);
-		SetMouseInputEnabled(true);
+		SetMouseInputEnabled(false);
 	}
 
-	virtual void ApplySchemeSettings(vgui::IScheme* pScheme)
-	{
-		BaseClass::ApplySchemeSettings(pScheme);
+	virtual void ApplySchemeSettings(vgui::IScheme* pScheme);
+	virtual void PerformLayout();
+	virtual bool ShouldDraw();
+	virtual void OnKeyCodePressed(vgui::KeyCode code);
+	virtual void OnCommand(const char* command);
 
-		SetPaintBackgroundEnabled(true);
-		SetBgColor(Color(20, 20, 20, 210));
-		SetPaintBorderEnabled(false);
-
-		vgui::HFont hFontTitle = pScheme->GetFont("HudFontMediumBold", true);
-		vgui::HFont hFontRow = pScheme->GetFont("HudFontSmallBold", true);
-
-		m_pStatsLabel->SetFont(hFontRow);
-		m_pStatsLabel->SetFgColor(Color(235, 226, 202, 255));
-		m_pStatsLabel->SetContentAlignment(vgui::Label::a_center);
-		m_pStatsLabel->SetPaintBackgroundEnabled(false);
-
-		m_pRetryButton->SetFont(hFontTitle);
-		m_pMenuButton->SetFont(hFontTitle);
-	}
-
-	virtual void PerformLayout()
-	{
-		BaseClass::PerformLayout();
-
-		int screenWide, screenTall;
-		vgui::surface()->GetScreenSize(screenWide, screenTall);
-
-		int panelWide = 460;
-		int panelTall = 260;
-		SetPos((screenWide - panelWide) / 2, (screenTall - panelTall) / 2);
-		SetSize(panelWide, panelTall);
-
-		m_pStatsLabel->SetBounds(0, 20, panelWide, 120);
-		m_pRetryButton->SetBounds(40, panelTall - 60, 160, 36);
-		m_pMenuButton->SetBounds(panelWide - 200, panelTall - 60, 160, 36);
-	}
-
-	virtual bool ShouldDraw()
-	{
-		if (!TFGameRules() || !TFGameRules()->WaveMode_IsGameOver())
-			return false;
-
-		UpdateStats();
-		return true;  // TEMP: bypass CHudElement::ShouldDraw() to isolate the bug
-	}
-
-	void UpdateStats()
-	{
-		char buf[256];
-		const char* pszDiff = "Unknown";
-		switch ( TFGameRules()->WaveMode_GetDifficultyForHUD() )
-		{
-			case 0: pszDiff = "Hard"; break;
-			case 1: pszDiff = "Harder"; break;
-			case 2: pszDiff = "Hardest"; break;
-			case 3: pszDiff = "No-Hit"; break;
-		}
-		V_snprintf(buf, sizeof(buf),
-			"GAME OVER!\n\nKills: %d\nDifficulty: %s",
-			TFGameRules()->WaveMode_GetKillsForHUD(),
-			pszDiff);
-
-		m_pStatsLabel->SetText(buf);
-	}
-
-	virtual void OnCommand(const char* command)
-	{
-		if (!Q_stricmp(command, "wavemode_retry"))
-		{
-			engine->ClientCmd_Unrestricted("tf_wavemode_retry\n");
-			return;
-		}
-		else if (!Q_stricmp(command, "wavemode_menu"))
-		{
-			engine->ClientCmd_Unrestricted("disconnect\n");
-			return;
-		}
-
-		BaseClass::OnCommand(command);
-	}
+	void UpdateStats();
 
 private:
 	vgui::Label* m_pStatsLabel;
@@ -324,3 +253,124 @@ private:
 };
 
 DECLARE_HUDELEMENT(CHudWaveModeGameOver);
+
+// ============================================================================
+// CHudWaveModeGameOver implementation
+// ============================================================================
+
+void CHudWaveModeGameOver::ApplySchemeSettings(vgui::IScheme* pScheme)
+{
+	BaseClass::ApplySchemeSettings(pScheme);
+
+	SetPaintBackgroundEnabled(true);
+	SetBgColor(Color(20, 20, 20, 210));
+	SetPaintBorderEnabled(false);
+
+	vgui::HFont hFontRow = pScheme->GetFont("HudFontSmallBold", true);
+
+	m_pStatsLabel->SetFont(hFontRow);
+	m_pStatsLabel->SetFgColor(Color(235, 226, 202, 255));
+	m_pStatsLabel->SetContentAlignment(vgui::Label::a_center);
+	m_pStatsLabel->SetPaintBackgroundEnabled(false);
+
+	// Use the small row font for the button labels so they're more compact
+	m_pRetryButton->SetFont(hFontRow);
+	m_pMenuButton->SetFont(hFontRow);
+}
+
+void CHudWaveModeGameOver::PerformLayout()
+{
+	BaseClass::PerformLayout();
+
+	int screenWide, screenTall;
+	vgui::surface()->GetScreenSize(screenWide, screenTall);
+
+	int panelWide = 460;
+	int panelTall = 260;
+	SetPos((screenWide - panelWide) / 2, (screenTall - panelTall) / 2);
+	SetSize(panelWide, panelTall);
+
+	m_pStatsLabel->SetBounds(0, 20, panelWide, 120);
+	m_pRetryButton->SetBounds(40, panelTall - 60, 160, 36);
+	m_pMenuButton->SetBounds(panelWide - 200, panelTall - 60, 160, 36);
+}
+
+bool CHudWaveModeGameOver::ShouldDraw()
+{
+	if (!TFGameRules() || !TFGameRules()->WaveMode_IsGameOver())
+		return false;
+
+	UpdateStats();
+	return CHudElement::ShouldDraw();
+}
+
+void CHudWaveModeGameOver::UpdateStats()
+{
+	char buf[256];
+	const char* pszDiff = "Unknown";
+	switch ( TFGameRules()->WaveMode_GetDifficultyForHUD() )
+	{
+		case 0: pszDiff = "Hard"; break;
+		case 1: pszDiff = "Harder"; break;
+		case 2: pszDiff = "Hardest"; break;
+		case 3: pszDiff = "No-Hit"; break;
+	}
+	V_snprintf(buf, sizeof(buf),
+		"GAME OVER!\n\nKills: %d\nDifficulty: %s",
+		TFGameRules()->WaveMode_GetKillsForHUD(),
+		pszDiff);
+
+	m_pStatsLabel->SetText(buf);
+}
+
+void CHudWaveModeGameOver::OnCommand(const char* command)
+{
+	if (!Q_stricmp(command, "wavemode_retry"))
+	{
+		engine->ClientCmd_Unrestricted("tf_wavemode_retry\n");
+		return;
+	}
+	else if (!Q_stricmp(command, "wavemode_menu"))
+	{
+		engine->ClientCmd_Unrestricted("disconnect\n");
+		return;
+	}
+
+	BaseClass::OnCommand(command);
+}
+
+void CHudWaveModeGameOver::OnKeyCodePressed(vgui::KeyCode code)
+{
+	if (code == KEY_F3)
+	{
+		engine->ClientCmd_Unrestricted("tf_wavemode_retry\n");
+	}
+	else if (code == KEY_F4)
+	{
+		engine->ClientCmd_Unrestricted("disconnect\n");
+	}
+}
+
+bool WaveModeGameOverHudElementKeyInput(int down, ButtonCode_t keynum, const char* pszCurrentBinding)
+{
+	if (down != 1)
+		return false;
+
+	CHudWaveModeGameOver* pPanel = (CHudWaveModeGameOver*)GET_HUDELEMENT(CHudWaveModeGameOver);
+	if (!pPanel)
+		return false;
+
+	if (keynum == KEY_F3)
+	{
+		pPanel->OnKeyCodePressed(keynum);
+		return true; // intercept — don't let game take screenshot
+	}
+
+	if (keynum == KEY_F4)
+	{
+		pPanel->OnKeyCodePressed(keynum);
+		return false; // pass through — let game take screenshot
+	}
+
+	return false;
+}
