@@ -1254,6 +1254,7 @@ private:
 	CNetworkVar(int, m_nWaveModeKills_Net);
 	CNetworkVar(bool, m_bWaveModeGameOver_Net);
 	CNetworkVar(int, m_nWaveModeDifficulty_Net);	// client-visible copy, since m_nWaveModeDifficulty is GAME_DLL only
+	CNetworkVar(int, m_nWaveModeRedTeamCount_Net);	// tracks how many RED players joined during the wave (so game-over still fires even after they move to spectator on death)
 	CNetworkVar(bool, m_bWave2InCooldown_Net);
 	CNetworkVar(float, m_flWave2CooldownEndTime_Net);
 	CNetworkVar(int, m_nWave2LastBuffType);         // -1 = none yet, 0 = health, 1 = damage, 2 = resist
@@ -1266,6 +1267,8 @@ private:
 		int		WaveMode_GetKillsForHUD(void) const { return m_nWaveModeKills_Net; }
 		bool	WaveMode_IsGameOver(void) const { return m_bWaveModeGameOver_Net; }
 		int		WaveMode_GetDifficultyForHUD(void) const { return m_nWaveModeDifficulty_Net; }
+		int		WaveMode_GetRedTeamCount(void) const { return m_nWaveModeRedTeamCount_Net; }
+		void	WaveMode_SetRedTeamCount(int n);
 		int     Wave2_GetCurrentWaveForHUD(void) const { return m_nWave2CurrentWave; }
 		int		Wave2_GetBotsAliveForHUD(void) const { return m_nWave2BotsAliveCount; }
 		bool	Wave2_IsInCooldownForHUD(void) const { return m_bWave2InCooldown_Net; }

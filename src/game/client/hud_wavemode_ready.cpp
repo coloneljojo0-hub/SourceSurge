@@ -285,11 +285,18 @@ public:
 	void UpdateStats()
 	{
 		char buf[256];
+		const char* pszDiff = "Unknown";
+		switch ( TFGameRules()->WaveMode_GetDifficultyForHUD() )
+		{
+			case 0: pszDiff = "Hard"; break;
+			case 1: pszDiff = "Harder"; break;
+			case 2: pszDiff = "Hardest"; break;
+			case 3: pszDiff = "No-Hit"; break;
+		}
 		V_snprintf(buf, sizeof(buf),
-			"WAVE FAILED\n\nKills: %d\nDifficulty: %s",
+			"GAME OVER!\n\nKills: %d\nDifficulty: %s",
 			TFGameRules()->WaveMode_GetKillsForHUD(),
-			TFGameRules()->WaveMode_GetDifficultyForHUD() == 0 ? "Hard" :
-			TFGameRules()->WaveMode_GetDifficultyForHUD() == 1 ? "Harder" : "Hardest");
+			pszDiff);
 
 		m_pStatsLabel->SetText(buf);
 	}

@@ -22879,6 +22879,23 @@ void CTFGameRules::Wave2_Start(int nDifficulty)
 
 	Wave2_SpawnWave();
 
+	// Count real RED players who are in the fight at wave start.
+	// This becomes the baseline for game-over detection — we don't use
+	// ChangeTeam tracking because players may already be on RED before
+	// the wave begins (in which case ChangeTeam never fires for them).
+	CUtlVector<CTFPlayer*> playerVector;
+	CollectPlayers(&playerVector);
+	int nRedCount = 0;
+	FOR_EACH_VEC(playerVector, i)
+	{
+		CTFPlayer* pPlayer = playerVector[i];
+		if (!pPlayer || pPlayer->IsBot() || pPlayer->IsFakeClient())
+			continue;
+		if (pPlayer->GetTeamNumber() == TF_TEAM_RED)
+			nRedCount++;
+	}
+	m_nWaveModeRedTeamCount_Net.Set(nRedCount);
+
 	Msg("Wave2: started at difficulty %d\n", nDifficulty);
 }
 
@@ -22888,6 +22905,7 @@ void CTFGameRules::Wave2_Stop(void)
 	m_bWave2InCooldown = false;
 	m_nWave2CurrentWave.Set(0);
 	m_nWave2BotsAliveCount.Set(0);
+	m_nWaveModeRedTeamCount_Net.Set(0);
 
 	FOR_EACH_VEC(m_hWave2Bots, i)
 	{
@@ -23243,11 +23261,17 @@ void CTFGameRules::WaveMode_SetActive(bool bActive, int nDifficulty)
 	m_nWaveModeDifficulty_Net.Set(nDifficulty);
 	m_nWaveModeKills_Net.Set(0);
 	m_bWaveModeGameOver_Net.Set(false);
+	m_nWaveModeRedTeamCount_Net.Set(0);
 
 	for (int i = 0; i <= MAX_PLAYERS; i++)
 	{
 		m_bWaveModeReady_Net.Set(i, false);
 	}
+}
+
+void CTFGameRules::WaveMode_SetRedTeamCount( int n )
+{
+	m_nWaveModeRedTeamCount_Net.Set( n );
 }
 
 void CTFGameRules::WaveMode_Think(void)
@@ -23257,24 +23281,23 @@ void CTFGameRules::WaveMode_Think(void)
 
 	if (m_bWave2Active)
 	{
-		// wave is running - watch for every RED player being dead
+		// wave is running - watch for all RED players being dead
+		// Note: dead players are moved to TEAM_SPECTATOR by Event_Killed, so we
+		// can't use GetTeamNumber() to find them. Use m_nWaveModeRedTeamCount_Net
+		// (incremented on RED join, decremented on RED leave) instead.
+		int nRedTeamCount = m_nWaveModeRedTeamCount_Net;
+
 		CUtlVector<CTFPlayer*> playerVector;
 		CollectPlayers(&playerVector);
 
-		bool bAnyRedConnected = false;
 		bool bAnyRedAlive = false;
-
 		FOR_EACH_VEC(playerVector, i)
 		{
 			CTFPlayer* pPlayer = playerVector[i];
 			if (!pPlayer || pPlayer->IsBot() || pPlayer->IsFakeClient())
 				continue;
-
-			if (pPlayer->GetTeamNumber() != TF_TEAM_RED)
-				continue;
-
-			bAnyRedConnected = true;
-
+			// Player counts regardless of current team — they were a RED player
+			// at some point during this wave run.
 			if (pPlayer->IsAlive())
 			{
 				bAnyRedAlive = true;
@@ -23282,13 +23305,13 @@ void CTFGameRules::WaveMode_Think(void)
 			}
 		}
 
-		if (bAnyRedConnected && !bAnyRedAlive)
+		if (nRedTeamCount > 0 && !bAnyRedAlive)
 		{
 			Msg("[WaveMode DEBUG] All RED dead - triggering game over\n");
 			Wave2_Stop();
 			m_bWaveModeGameOver_Net.Set(true);
 		}
-		Msg("[WaveMode DEBUG] bAnyRedConnected=%d bAnyRedAlive=%d\n", bAnyRedConnected, bAnyRedAlive);
+		Msg("[WaveMode DEBUG] nRedTeamCount=%d bAnyRedAlive=%d\n", nRedTeamCount, bAnyRedAlive);
 		return;
 	}
 
