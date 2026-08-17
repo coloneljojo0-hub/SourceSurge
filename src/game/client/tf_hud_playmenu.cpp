@@ -46,16 +46,17 @@ CTFPlayMenu::CTFPlayMenu(vgui::Panel* parent) : BaseClass(parent, "TFPlayMenu")
 	// ---------------- Singleplayer Page ----------------
 	m_pSPMapLabel = new Label(m_pSingleplayerPage, "SPMapLabel", "Select Map:");
 	m_pSPMapCombo = new ComboBox(m_pSingleplayerPage, "SPMapCombo", 6, false);
-	m_pSPMapCombo->AddItem("Sandbox", NULL);
-	m_pSPMapCombo->AddItem("Map 1 (placeholder)", NULL);
-	m_pSPMapCombo->AddItem("Map 2 (placeholder)", NULL);
+	m_pSPMapCombo->AddItem("surge_sandbox", NULL);
+	m_pSPMapCombo->AddItem("surge_city", NULL);
+	m_pSPMapCombo->AddItem("vsh_seine_v3", NULL);
 	m_pSPMapCombo->ActivateItem(0);
 
 	m_pSPDiffLabel = new Label(m_pSingleplayerPage, "SPDiffLabel", "Select Difficulty:");
 	m_pSPDifficultyCombo = new ComboBox(m_pSingleplayerPage, "SPDifficultyCombo", 6, false);
-	m_pSPDifficultyCombo->AddItem("Easy", NULL);
-	m_pSPDifficultyCombo->AddItem("Normal", NULL);
-	m_pSPDifficultyCombo->AddItem("Hard", NULL);
+	m_pSPDifficultyCombo->AddItem("hard", NULL);
+	m_pSPDifficultyCombo->AddItem("harder", NULL);
+	m_pSPDifficultyCombo->AddItem("hardest", NULL);
+	m_pSPDifficultyCombo->AddItem("nohit", NULL);
 	m_pSPDifficultyCombo->ActivateItem(0);
 
 	m_pSPPlayButton = new Button(m_pSingleplayerPage, "SPPlayButton", "LAUNCH SINGLEPLAYER", this, "start_game");
@@ -376,8 +377,28 @@ void CTFPlayMenu::OnCommand(const char* command)
 	}
 	else if (!Q_stricmp(command, "start_game"))
 	{
-		Msg("Starting Singleplayer. Selected map index: %d, difficulty index: %d\n",
-			m_pSPMapCombo->GetActiveItem(), m_pSPDifficultyCombo->GetActiveItem());
+		char szMapName[64];
+		char szDiff[16];
+
+		int iMap = m_pSPMapCombo->GetActiveItem();
+		m_pSPMapCombo->GetItemText(iMap, szMapName, sizeof(szMapName));
+
+		int iDiff = m_pSPDifficultyCombo->GetActiveItem();
+		m_pSPDifficultyCombo->GetItemText(iDiff, szDiff, sizeof(szDiff));
+
+		ToggleplayMenu();
+
+		// Set the pending difficulty as a server convar, then start the map.
+		// tf_wavemode_start fires automatically when the player spawns
+		// (see CTFGameRules::FireGameEvent "player_spawn").
+		char szCmd[256];
+		Q_snprintf(szCmd, sizeof(szCmd),
+			"map %s; "
+			"wait; wait; wait; wait; wait; wait; wait; wait; "
+			"tf_wavemode_pending_diff %s; "
+			"tf_wavemode_start %s;",
+			szMapName, szDiff, szDiff);
+		engine->ClientCmd_Unrestricted(szCmd);
 		return;
 	}
 	else if (!Q_stricmp(command, "start_coop"))

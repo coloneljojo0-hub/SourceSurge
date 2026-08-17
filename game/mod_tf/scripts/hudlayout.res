@@ -1521,6 +1521,18 @@
 		"alpha"					"100"
 	}
 
+	"HudFPS"
+	{
+	"ControlName"	"CTFHudFPS"
+	"fieldName"		"HudFPS"
+	"xpos"			"r0"
+	"ypos"			"0"
+	"wide"			"70"
+	"tall"			"20"
+	"visible"		"1"
+	"enabled"		"1"
+	}
+
 	"HudSpeedometer"
 	{
 		"ControlName"	"CTFHudSpeedometer"
@@ -1541,6 +1553,30 @@
 	"ypos"			"0"
 	"wide"			"400"
 	"tall"			"100"
+	"visible"		"1"
+	"enabled"		"1"
+	}
+
+	"HudWaveModeReady"
+	{
+	"ControlName"	"CHudWaveModeReady"
+	"fieldName"		"HudWaveModeReady"
+	"xpos"			"c-150"
+	"ypos"			"c-60"
+	"wide"			"300"
+	"tall"			"120"
+	"visible"		"1"
+	"enabled"		"1"
+	}
+
+	"HudWaveModeGameOver"
+	{
+	"ControlName"	"CHudWaveModeGameOver"
+	"fieldName"		"HudWaveModeGameOver"
+	"xpos"			"c-200"
+	"ypos"			"c-150"
+	"wide"			"400"
+	"tall"			"300"
 	"visible"		"1"
 	"enabled"		"1"
 	}

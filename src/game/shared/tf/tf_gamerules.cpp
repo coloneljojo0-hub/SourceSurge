@@ -2016,6 +2016,11 @@ void CTFGameRulesProxy::Activate()
 	TFGameRules()->SetRopesHolidayLightsAllowed( m_bRopesHolidayLightsAllowed );
 
 	ListenForGameEvent( "teamplay_round_win" );
+	ListenForGameEvent( "player_spawn" );
+
+	// tf_wavemode_pending_diff: set by the play menu before map load,
+	// consumed once the first human RED player spawns.
+	ConVar_Register();
 
 	BaseClass::Activate();
 }
@@ -18414,6 +18419,8 @@ int CTFGameRules::GetTimeLeft( void )
 	return ( iTime );
 }
 
+// Wave mode cvars declared in tf_gamerules.h.
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -18590,6 +18597,35 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 			}
 		}
 		
+	}
+	else if (!Q_strcmp(eventName, "player_spawn"))
+	{
+		int iPlayerIndex = event->GetInt("userid");
+		CTFPlayer* pPlayer = ToTFPlayer(UTIL_PlayerByUserId(iPlayerIndex));
+		if (!pPlayer)
+			return;
+
+		// Auto-start the wave when the first human RED player spawns.
+		// Only fires once — subsequent spawns are ignored.
+		Msg("[WaveMode] player_spawn: m_bWave2Active=%d team=%d isbot=%d diff=%s\n",
+			m_bWave2Active, pPlayer->GetTeamNumber(), pPlayer->IsBot(), tf_wavemode_pending_diff.GetString());
+		if (!m_bWave2Active && pPlayer->GetTeamNumber() == TF_TEAM_RED && !pPlayer->IsBot())
+		{
+			const char* pszDiff = tf_wavemode_pending_diff.GetString();
+
+			int nDiff = 0; // hard
+			if (!Q_stricmp(pszDiff, "harder"))
+				nDiff = 1;
+			else if (!Q_stricmp(pszDiff, "hardest"))
+				nDiff = 2;
+			else if (!Q_stricmp(pszDiff, "nohit"))
+				nDiff = 3;
+
+			Wave2_Start(nDiff);
+
+			// Reset so this doesn't fire again on respawn
+			tf_wavemode_pending_diff.SetValue("none");
+		}
 	}
 
 #else	// CLIENT_DLL
@@ -22794,6 +22830,16 @@ CON_COMMAND_F(tf_wave2_stop, "Stop the wave 2 bot system and clean up all wave b
 	TFGameRules()->Wave2_Stop();
 }
 
+// tf_wavemode_pending_diff: set by the play menu before the map loads,
+// consumed once the first human RED player spawns to auto-start the wave.
+ConVar tf_wavemode_pending_diff("tf_wavemode_pending_diff", "hard", FCVAR_HIDDEN,
+	"Pending difficulty for the play menu's auto-start wave system.");
+
+// tf_wavemode_diff: the currently active (or last active) difficulty.
+// Never auto-reset — used by retry to restart with the same difficulty.
+ConVar tf_wavemode_diff("tf_wavemode_diff", "hard", FCVAR_HIDDEN,
+	"Current difficulty for retry / last session.");
+
 CON_COMMAND_F(tf_wavemode_ready, "Toggle your ready state for Wavemode.", FCVAR_GAMEDLL)
 {
 	CTFPlayer* pPlayer = ToTFPlayer(UTIL_GetCommandClient());
@@ -22810,26 +22856,29 @@ CON_COMMAND_F(tf_wavemode_ready, "Toggle your ready state for Wavemode.", FCVAR_
 
 }
 
-CON_COMMAND_F(tf_wavemode_retry, "Reset Wavemode after a game over so players can ready up again.", FCVAR_GAMEDLL)
+CON_COMMAND_F(tf_wavemode_retry, "Reset Wavemode after a game over and trigger a map reload.", FCVAR_GAMEDLL)
 {
-	if (!TFGameRules() || !TFGameRules()->WaveMode_IsGameOver())
+	CTFGameRules *pTFRules = TFGameRules();
+	if (!pTFRules)
 		return;
 
-	int nDifficulty = TFGameRules()->WaveMode_GetDifficultyForHUD();
-	TFGameRules()->WaveMode_SetActive(true, nDifficulty);
+	// Capture current difficulty before stopping.
+	const char *pszDiff = "hard";
+	int nDiff = pTFRules->WaveMode_GetDifficultyForHUD();
+	if (nDiff == 1)
+		pszDiff = "harder";
+	else if (nDiff == 2)
+		pszDiff = "hardest";
+	else if (nDiff == 3)
+		pszDiff = "nohit";
 
-	for (int i = 1; i <= MAX_PLAYERS; i++)
-	{
-		CBasePlayer* pPlayer = UTIL_PlayerByIndex(i);
-		CTFPlayer* pTFPlayer = ToTFPlayer(pPlayer);
-		if (!pTFPlayer)
-			continue;
+	// Stop the wave and kick all bots.
+	pTFRules->Wave2_Stop();
 
-		if (pTFPlayer->GetTeamNumber() == TF_TEAM_RED)
-		{
-			pTFPlayer->ForceRespawn();
-		}
-	}
+	// Set pending diff — player_spawn will see this and trigger Wave2_Start.
+	tf_wavemode_pending_diff.SetValue(pszDiff);
+
+	Msg("[WaveMode] Retry: difficulty=%s\n", pszDiff);
 }
 
 CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival gamemode. Usage: tf_wavemode_start <hard|harder|hardest|nohit>", FCVAR_GAMEDLL | FCVAR_CHEAT)
@@ -22857,6 +22906,9 @@ CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival ga
 
 	if (!TFGameRules())
 		return;
+
+	// Sync the persistent diff convar — retry uses this to re-launch with the same settings.
+	tf_wavemode_diff.SetValue(args[1]);
 
 	// Fully custom ready-up - no native tournament/matchmaking state involved.
 	// WaveMode_Think() (called from CTFGameRules::Think()) watches ready state
@@ -22919,6 +22971,9 @@ void CTFGameRules::Wave2_Stop(void)
 
 	m_nWave2CurrentWave = 0;
 	m_nWave2BotsAliveCount = 0;
+
+	// Reset game-over state so the HUD hides the game-over panel on retry.
+	m_bWaveModeGameOver_Net.Set(false);
 
 	Msg("Wave2: stopped, all bots removed.\n");
 }
@@ -23307,11 +23362,9 @@ void CTFGameRules::WaveMode_Think(void)
 
 		if (nRedTeamCount > 0 && !bAnyRedAlive)
 		{
-			Msg("[WaveMode DEBUG] All RED dead - triggering game over\n");
 			Wave2_Stop();
 			m_bWaveModeGameOver_Net.Set(true);
 		}
-		Msg("[WaveMode DEBUG] nRedTeamCount=%d bAnyRedAlive=%d\n", nRedTeamCount, bAnyRedAlive);
 		return;
 	}
 

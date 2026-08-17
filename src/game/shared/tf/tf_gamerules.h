@@ -118,6 +118,9 @@ bool BInEndOfMatch();
 //=============================================================================
 // Training mode cvars
 extern ConVar	tf_training_client_message;
+
+// Wave mode cvars
+extern ConVar tf_wavemode_pending_diff;
 enum {
 	TRAINING_CLIENT_MESSAGE_NONE = 0,
 	TRAINING_CLIENT_MESSAGE_WATCHING_INTRO_MOVIE,

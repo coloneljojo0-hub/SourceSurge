@@ -327,7 +327,10 @@ void CHudWaveModeGameOver::OnCommand(const char* command)
 {
 	if (!Q_stricmp(command, "wavemode_retry"))
 	{
+		// Server tf_wavemode_retry resets wave state and sets tf_wavemode_pending_diff.
+		// After the map reload, player_spawn will fire Wave2_Start automatically.
 		engine->ClientCmd_Unrestricted("tf_wavemode_retry\n");
+		SetVisible(false);
 		return;
 	}
 	else if (!Q_stricmp(command, "wavemode_menu"))
@@ -343,11 +346,28 @@ void CHudWaveModeGameOver::OnKeyCodePressed(vgui::KeyCode code)
 {
 	if (code == KEY_F3)
 	{
-		engine->ClientCmd_Unrestricted("tf_wavemode_retry\n");
+		// Get current map name (strip maps/ prefix and .bsp suffix).
+		char szMapName[64] = "surge_sandbox";
+		const char *pszFullName = engine->GetLevelName();
+		if (pszFullName && pszFullName[0])
+		{
+			// V_FileBase extracts just "surge_sandbox" from any path like
+			// "D:/.mygame/.../maps/surge_sandbox.bsp" or "maps/surge_sandbox.bsp"
+			V_FileBase(pszFullName, szMapName, sizeof(szMapName));
+		}
+
+		// tf_wavemode_retry (server): saves diff, resets state, kicks bots.
+		// map: triggers full reload — player_spawn fires Wave2_Start automatically.
+		char szCmd[256];
+		Q_snprintf(szCmd, sizeof(szCmd),
+			"tf_wavemode_retry; map %s;", szMapName);
+		engine->ClientCmd_Unrestricted(szCmd);
+		SetVisible(false);
 	}
 	else if (code == KEY_F4)
 	{
 		engine->ClientCmd_Unrestricted("disconnect\n");
+		SetVisible(false);
 	}
 }
 

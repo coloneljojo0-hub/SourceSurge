@@ -722,8 +722,15 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 	// Extract the result
 	uint32 unBytes;
 	Verify( SteamHTTP()->GetHTTPResponseBodySize( pInfo->m_hRequest, &unBytes ) );
-	CUtlBuffer bufInventory;
-	bufInventory.EnsureCapacity( unBytes );
+	if ( unBytes == 0 )
+	{
+		Warning( "Inventory request returned empty response\n" );
+		state.Backoff();
+		state.m_eState = kWebapiInventoryState_RequestInventory;
+		SteamHTTP()->ReleaseHTTPRequest( pInfo->m_hRequest );
+		return;
+	}
+	CUtlBuffer bufInventory( MAX( unBytes, 1u ) );
 	bufInventory.SeekPut( CUtlBuffer::SEEK_HEAD, unBytes );
 	Verify( SteamHTTP()->GetHTTPResponseBodyData( pInfo->m_hRequest, (uint8*)bufInventory.Base(), unBytes ) );
 
@@ -772,9 +779,11 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 	if ( pValues->FindChild( "msg" ) )
 	{
 		CUtlBuffer bufMsgSubscription;
-		if ( !pValues->BGetChildBinaryValue( bufMsgSubscription, "msg" ) )
+		if ( !pValues->BGetChildBinaryValue( bufMsgSubscription, "msg" ) || bufMsgSubscription.TellPut() == 0 )
 		{
-			Warning( "Inventory response missing inventory\n" );
+			Warning( "Inventory response missing or empty inventory\n" );
+			state.Backoff();
+			state.m_eState = kWebapiInventoryState_RequestInventory;
 			return;
 		}
 
@@ -785,17 +794,33 @@ void CTFGCClientSystem::OnWebapiInventoryReceived( HTTPRequestCompleted_t* pInfo
 			return;
 		}
 
-		// Version should match the one they said we have
-		Assert( pSOCache->GetVersion() == pValues->GetChildUInt64Value( "version" ) );
+		// Version should match the one they said we have.
+		// On mismatch (common on offline mods with stale local cache), back off and retry later.
+		if ( pSOCache->GetVersion() != pValues->GetChildUInt64Value( "version" ) )
+		{
+			Warning( "Inventory version mismatch (local=%llu != remote=%llu), retrying.\n",
+				pSOCache->GetVersion(), pValues->GetChildUInt64Value( "version" ) );
+			state.Backoff();
+			state.m_eState = kWebapiInventoryState_RequestInventory;
+			return;
+		}
 	}
 	else
 	{
 		// Cache up to date.  Validate version matches
 		CGCClientSharedObjectCache* pSOCache = GetGCClient()->FindSOCache( userSteamID, false );
 		Assert( pSOCache );
-		if( pSOCache )
+		if ( pSOCache )
 		{
-			Assert( pSOCache->GetVersion() == pValues->GetChildUInt64Value( "version" ) );
+			// Version should match. On mismatch, back off and retry.
+			if ( pSOCache->GetVersion() != pValues->GetChildUInt64Value( "version" ) )
+			{
+				Warning( "Inventory version mismatch on cache update (local=%llu != remote=%llu), retrying.\n",
+					pSOCache->GetVersion(), pValues->GetChildUInt64Value( "version" ) );
+				state.Backoff();
+				state.m_eState = kWebapiInventoryState_RequestInventory;
+				return;
+			}
 		}
 	}
 
@@ -872,6 +897,9 @@ void CTFGCClientSystem::Update( float frametime )
 {
 	BaseClass::Update( frametime );
 
+	// Skip inventory fetch when offline - no network means GC responses are garbage
+	if ( !engine->IsConnected() )
+		return;
 
 	WebapiInventoryThink();
 

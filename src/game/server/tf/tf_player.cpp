@@ -14152,6 +14152,10 @@ bool CTFPlayer::SetObserverMode(int mode)
 //-----------------------------------------------------------------------------
 void CTFPlayer::StateEnterOBSERVER( void )
 {
+	// Must be dead
+	m_lifeState = LIFE_DEAD;
+	pl.deadflag = true;
+
 	// Always start a spectator session in chase mode
 	m_iObserverLastMode = OBS_MODE_CHASE;
 

@@ -258,7 +258,7 @@ void CTFSteamStats::UploadStats()
 
 	// Only upload if Steam is running & the achievement manager exists.
 	if ( !steamapicontext->SteamUserStats() )
-		return; 
+		return;
 
 	CAchievementMgr *pAchievementMgr = dynamic_cast<CAchievementMgr *>( engine->GetAchievementMgr() );
 	if ( !pAchievementMgr )
