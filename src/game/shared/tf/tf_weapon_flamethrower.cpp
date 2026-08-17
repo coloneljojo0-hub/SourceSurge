@@ -36,7 +36,6 @@
 	#include "tf_weapon_compound_bow.h"
 	#include "tf_projectile_arrow.h"
 	#include "NextBot/NextBotManager.h"
-	#include "halloween/merasmus/merasmus_trick_or_treat_prop.h"
 	#include "tf_logic_robot_destruction.h"
 	#include "tf_passtime_logic.h"
 
@@ -63,7 +62,6 @@ const float	tf_flamethrower_initial_afterburn_duration = 3.f;
 const float	tf_flamethrower_airblast_cone_angle = 35.0f;
 
 
-#include "tf_pumpkin_bomb.h"
 
 const float	tf_flamethrower_new_flame_fire_delay = 0.02f;
 const float	tf_flamethrower_damage_per_tick = 13.f;

@@ -87,12 +87,10 @@
 #include "hl2orange.spa.h"
 #include "bot/tf_bot.h"
 #include "tf_objective_resource.h"
-#include "halloween/tf_weapon_spellbook.h"
 #include "tf_weapon_buff_item.h"
 #include "tf_passtime_logic.h"
 #include "tf_weapon_passtime_gun.h"
 #include "entity_healthkit.h"
-#include "halloween/merasmus/merasmus.h"
 #include "tf_weapon_grapplinghook.h"
 #include "tf_wearable_levelable_item.h"
 #include "tf_weapon_rocketpack.h"
@@ -3233,6 +3231,7 @@ void CTFPlayerShared::ConditionThink( void )
 
 	if ( InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) )
 	{
+#if 0 // Halloween disabled for Source Surge
 #ifdef GAME_DLL
 		static struct 
 		{
@@ -3267,6 +3266,10 @@ void CTFPlayerShared::ConditionThink( void )
 #else
 		m_pOuter->HalloweenBombHeadUpdate();
 #endif 
+#else
+		// Halloween bomb head mechanic disabled
+		m_nHalloweenBombHeadStage = 0;
+#endif
 	}
 	else
 	{
@@ -3276,17 +3279,15 @@ void CTFPlayerShared::ConditionThink( void )
 	}
 
 #ifdef GAME_DLL
-	if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_VIADUCT ) && InCond( TF_COND_PURGATORY ) )
-	{
-		// escalating injury multiplier while in purgatory
-		if ( m_pOuter->m_purgatoryPainMultiplierTimer.IsElapsed() )
-		{
-			++m_pOuter->m_purgatoryPainMultiplier;
-
-			// injury multiplies rapidly after initial period
-			m_pOuter->m_purgatoryPainMultiplierTimer.Start( 10.0f );
-		}
-	}
+	// Halloween purgatory mechanic disabled - IsHalloweenScenario always returns false
+	// if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_VIADUCT ) && InCond( TF_COND_PURGATORY ) )
+	// {
+	// 	if ( m_pOuter->m_purgatoryPainMultiplierTimer.IsElapsed() )
+	// 	{
+	// 		++m_pOuter->m_purgatoryPainMultiplier;
+	// 		m_pOuter->m_purgatoryPainMultiplierTimer.Start( 10.0f );
+	// 	}
+	// }
 #endif
 
 	CheckDisguiseTimer();
@@ -5306,7 +5307,6 @@ void CTFPlayerShared::OnAddHalloweenGhostMode( void )
 	m_pOuter->AddFlag( FL_NOTARGET );
 
 #ifdef GAME_DLL
-
 	CSingleUserRecipientFilter filter( m_pOuter );
 	if ( TFGameRules() )
 	{
@@ -5339,26 +5339,27 @@ void CTFPlayerShared::OnAddHalloweenGhostMode( void )
 		m_pOuter->GetActiveWeapon()->Holster();
 	}
 	m_pOuter->SetActiveWeapon( NULL );	
-
+	
 	CBaseObject * pCarriedObj = GetCarriedObject();
 	if ( pCarriedObj )
 	{
 		pCarriedObj->DetonateObject();
 	}
+#endif // GAME_DLL
 
-	CTFSpellBook *pSpellBook = dynamic_cast< CTFSpellBook* >( m_pOuter->GetEntityForLoadoutSlot( LOADOUT_POSITION_ACTION ) );
+#if 0 // Halloween disabled for Source Surge
+	void *pSpellBook = nullptr;
 	if ( pSpellBook )
 	{
-		pSpellBook->ClearSpell();
+		// pSpellBook->ClearSpell();
 	}
-#else
 	// Go thirdperson
 	SetAppropriateCamera( m_pOuter );
 
 	Color color;
 	m_pOuter->GetTeamColor( color );
 	m_pOuter->SetRenderColor( color.r(), color.g(), color.b() );
-#endif
+#endif // Halloween disabled
 }
 
 //-----------------------------------------------------------------------------
@@ -5494,13 +5495,13 @@ void CTFPlayerShared::OnAddHalloweenKart( void )
 	
 	//ResetKartDamage
 	m_pOuter->ResetKartDamage();
-	
+#if 0 // Halloween disabled for Source Surge
 	CTFSpellBook *pSpellBook = dynamic_cast< CTFSpellBook* >( m_pOuter->GetEntityForLoadoutSlot( LOADOUT_POSITION_ACTION ) );
 	if ( pSpellBook )
 	{
 		pSpellBook->ClearSpell();
 	}
-
+#endif
 	m_pOuter->m_flKartNextAvailableBoost = gpGlobals->curtime + 3.0f;
 
 	// Switch to melee to make sure Spies and Engies don't have build menus open
@@ -5545,12 +5546,13 @@ void CTFPlayerShared::OnRemoveHalloweenKart( void )
 	RemoveAttributeFromPlayer( "head scale" );
 	//ResetKartDamage
 	m_pOuter->ResetKartDamage();
-
+#if 0 // Halloween disabled for Source Surge
 	CTFSpellBook *pSpellBook = dynamic_cast<CTFSpellBook*>( m_pOuter->GetEntityForLoadoutSlot( LOADOUT_POSITION_ACTION ) );
 	if ( pSpellBook )
 	{
 		pSpellBook->ClearSpell();
 	}
+#endif
 #else
 	// When we have every taunt cam use this system, we should clean up after ourselves. But for now, this causes a bad interaction
 	// with other systems.

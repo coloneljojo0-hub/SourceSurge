@@ -91,20 +91,20 @@
 #include "tf_objective_resource.h"
 #include "tf_weapon_pipebomblauncher.h"
 #include "func_achievement.h"
-#include "halloween/merasmus/merasmus.h"
+// Halloween includes removed for Source Surge
 #include "inetchannel.h"
 #include "tf_wearable_levelable_item.h"
 #include "tf_weapon_jar.h"
-#include "halloween/tf_weapon_spellbook.h"
+// Halloween spellbook include removed for Source Surge
 #include "soundenvelope.h"
 #include "tf_triggers.h"
 #include "collisionutils.h"
 #include "tf_taunt_prop.h"
 #include "eventlist.h"
 #include "entity_rune.h"
-#include "entity_halloween_pickup.h"
+// Halloween entity pickup removed for Source Surge
 #include "tf_gc_server.h"
-#include "tf_logic_halloween_2014.h"
+// Halloween logic removed for Source Surge
 #include "tf_weapon_knife.h"
 #include "tf_weapon_grapplinghook.h"
 #include "tf_dropped_weapon.h"
@@ -125,7 +125,7 @@
 #include "player_vs_environment/tf_upgrades.h"
 #include "player_vs_environment/tf_population_manager.h"
 #include "tf_revive.h"
-#include "tf_logic_halloween_2014.h"
+// Halloween logic removed for Source Surge
 #include "tf_logic_player_destruction.h"
 #include "tf_weapon_slap.h"
 #include "func_croc.h"
@@ -1489,6 +1489,7 @@ void CTFPlayer::TFPlayerThink()
 
 	// Halloween Hacks
 	// Spell Casting on Attack1
+#if 0 // CTFSpellBook / Halloween kart spells disabled
 	if ( m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
 	{
 		// Check if this is the spellbook so we can save off info to preserve weapon switching
@@ -1515,6 +1516,7 @@ void CTFPlayer::TFPlayerThink()
 			}
 		}
 	}
+#endif // 0
 
 	CBaseEntity *pGroundEntity = GetGroundEntity();
 
@@ -2672,6 +2674,7 @@ void CTFPlayer::AddHalloweenKartPushEvent( CTFPlayer *pOther, CBaseEntity *pInfl
 
 	m_vHalloweenKartPush += vForce;
 
+#if 0 // CTFMinigameLogic / CHalloweenPickup / Halloween MVM disabled
 	// Dropped collection game tokens if hit hard enough and we're in the collection minigame
 	if ( pOther && iDamage > 10 && CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() && 
 		CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame()->GetMinigameType() == CTFMiniGame::EMinigameType::MINIGAME_HALLOWEEN2014_COLLECTION )
@@ -2713,6 +2716,7 @@ void CTFPlayer::AddHalloweenKartPushEvent( CTFPlayer *pOther, CBaseEntity *pInfl
 			}
 		}
 	}
+#endif // 0
 	
 	//DevMsg( "Kart Impact %fx,%fy,%fz - %f Base. %f Multiplayer, %f TotalForce, %d Damage, %i Class \n", 
 	//	vForce.x, vForce.y, vForce.z, vForce.Length(), flNewKartKnockbackMultiplier, vForce.Length() * flNewKartKnockbackMultiplier, iDamage, GetPlayerClass()->GetClassIndex() );
@@ -4082,6 +4086,7 @@ void CTFPlayer::Spawn()
 			{
 				pSpawnEntName = "hell_ghost_spawn";
 			}
+		#if 0 // CTFMinigameLogic disabled for Source Surge
 			else if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) && CTFMinigameLogic::GetMinigameLogic() )
 			{
 				CTFMiniGame *pActiveMinigame = CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame();
@@ -4090,6 +4095,7 @@ void CTFPlayer::Spawn()
 					pSpawnEntName = pActiveMinigame->GetTeamSpawnPointName( GetTeamNumber() );
 				}
 			}
+		#endif
 
 			if ( pSpawnEntName )
 			{
@@ -4146,7 +4152,9 @@ void CTFPlayer::Spawn()
 
 
 	SetContextThink( &CTFPlayer::PostSpawnThink, gpGlobals->curtime + 0.1f, "PostSpawnThink" );
+#if 0 // C1v1Gamemode not in server build
 	g_1v1Gamemode.OnPlayerSpawn(this);
+#endif
 }
 
 
@@ -5162,6 +5170,7 @@ void CTFPlayer::UseActionSlotItemPressed( void )
 	}
 
 	// is it a throwable?
+#if 0 // CTFThrowable / CTFSpellBook disabled for Source Surge
 	CTFThrowable *pThrowable = dynamic_cast< CTFThrowable* >( pActionSlotEntity );
 	if ( pThrowable )
 	{
@@ -5212,6 +5221,7 @@ void CTFPlayer::UseActionSlotItemPressed( void )
 		Weapon_Switch( pThrowable );
 		return;
 	}
+#endif
 
 	if ( TFGameRules() && TFGameRules()->IsUsingGrapplingHook() )
 	{
@@ -9101,12 +9111,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				if ( !(info.GetDamageType() & DMG_FALL) )
 				{
 					// Only kill if the player is actually alive.
-					// Calling CommitSuicide on someone mid-transition can trigger
-					// StateThinkOBSERVER with m_lifeState != LIFE_DEAD (assert fail).
-					if ( IsAlive() )
-					{
-						CommitSuicide( false, true );
-					}
+						// Set m_lifeState BEFORE CommitSuicide to prevent StateThinkOBSERVER
+						// from asserting on m_lifeState == LIFE_DEAD while state is mid-transition.
+						if ( IsAlive() && m_lifeState == LIFE_ALIVE )
+						{
+							m_lifeState = LIFE_DEAD;
+							CommitSuicide( false, true );
+						}
 					return 0;
 				}
 			}
@@ -12865,7 +12876,9 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 
 	// Hook custom 1v1 mode logic on player death
+#if 0 // C1v1Gamemode not in server build
 	g_1v1Gamemode.OnPlayerKilled(this, info.GetAttacker());
+#endif
 
 
 
@@ -13659,7 +13672,9 @@ void CTFPlayer::SetIsCoaching( bool bIsCoaching )
 // Called when the player disconnects from the server.
 void CTFPlayer::TeamFortress_ClientDisconnected( void )
 {
+#if 0 // CPlayerStatsManager not in server build
 	g_PlayerStatsManager.OnPlayerDisconnect(this);
+#endif
 
 	RemoveAllOwnedEntitiesFromWorld( true );
 	RemoveNemesisRelationships();
@@ -16748,9 +16763,11 @@ bool CTFPlayer::IsValidObserverTarget( CBaseEntity * target )
 		{
 			if ( TFGameRules()->GetActiveBoss()->GetBossType() == HALLOWEEN_BOSS_MERASMUS )
 			{
+			#if 0 // CMerasmus disabled for Source Surge
 				CMerasmus *pMerasmus = assert_cast< CMerasmus* >( TFGameRules()->GetActiveBoss() );
 				if ( pMerasmus && pMerasmus->IsHiding() )
 					return false;
+			#endif
 			}
 
 			return true;
@@ -19907,6 +19924,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 
 	if ( TFGameRules() && TFGameRules()->GetActiveBoss() && ( TFGameRules()->GetActiveBoss()->GetBossType() == HALLOWEEN_BOSS_MERASMUS ) )
 	{
+#if 0 // CMerasmus disabled for Source Surge
 		CMerasmus* pMerasmus = assert_cast< CMerasmus* >( TFGameRules()->GetActiveBoss() );
 		if ( pMerasmus )
 		{
@@ -19915,6 +19933,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 				criteriaSet.AppendCriteria( "IsMerasmusHiding", "1" );
 			}
 		}
+#endif
 	}
 
 	bool bInHell = false;
@@ -20949,6 +20968,7 @@ void CTFPlayer::PlayerUse ( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#if 0 // CTFSpellBook disabled for Source Surge
 void CTFPlayer::ClearSpells()
 {
 	CTFSpellBook *pSpellBook = dynamic_cast< CTFSpellBook* >( GetEntityForLoadoutSlot( LOADOUT_POSITION_ACTION ) );
@@ -20958,10 +20978,14 @@ void CTFPlayer::ClearSpells()
 		pSpellBook->ClearSpell();
 	}
 }
+#endif
+
+// Stub for script bindings
+void CTFPlayer::ClearSpells() {}
 
 void CTFPlayer::InputRoundSpawn( inputdata_t &inputdata )
 {
-	ClearSpells();
+	// Halloween spellbook disabled for Source Surge
 }
 
 //-----------------------------------------------------------------------------
@@ -21218,6 +21242,7 @@ void CTFPlayer::InputTriggerLootIslandAchievement2( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#if 0 // CTFSpellBook disabled for Source Surge
 void CTFPlayer::RollRareSpell()
 {
 	CTFSpellBook *pSpellBook = dynamic_cast< CTFSpellBook* >( GetEntityForLoadoutSlot( LOADOUT_POSITION_ACTION ) );
@@ -21236,10 +21261,17 @@ void CTFPlayer::RollRareSpell()
 		gameeventmanager->FireEvent( pEvent, true );
 	}
 }
+#endif
 
+// Stub for script bindings
+void CTFPlayer::RollRareSpell() {}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPlayer::InputRollRareSpell( inputdata_t &inputdata )
 {
-	RollRareSpell();
+	// Halloween spellbook disabled for Source Surge
 }
 
 //-----------------------------------------------------------------------------

@@ -396,7 +396,9 @@ CHud::CHud()
 //-----------------------------------------------------------------------------
 void CHud::Init(void)
 {
+#if 0 // DiscordRPC not linked in Source Surge
 	DiscordRPC_Init();
+#endif
 
 	HOOK_HUD_MESSAGE(gHUD, ResetHUD);
 
@@ -504,7 +506,9 @@ void CHud::InitFonts()
 //-----------------------------------------------------------------------------
 void CHud::Shutdown(void)
 {
+#if 0 // DiscordRPC not linked in Source Surge
 	DiscordRPC_Shutdown();
+#endif
 
 	gLCD.Shutdown();
 
@@ -1185,7 +1189,9 @@ bool CHud::DoesRenderGroupExist( int iGroupIndex )
 //-----------------------------------------------------------------------------
 void CHud::UpdateHud(bool bActive)
 {
+#if 0 // DiscordRPC not linked in Source Surge
 	DiscordRPC_RunCallbacks();
+#endif
 
 	// clear the weapon bits.
 	gHUD.m_iKeyBits &= (~(IN_WEAPON1 | IN_WEAPON2));

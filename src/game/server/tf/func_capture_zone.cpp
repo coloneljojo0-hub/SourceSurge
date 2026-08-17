@@ -336,6 +336,7 @@ void CCaptureZone::Capture( CBaseEntity *pOther )
 
 				if ( TFGameRules() )
 				{
+				#if 0 // Holiday items disabled for Source Surge
 					if ( TFGameRules()->IsHolidayActive( kHoliday_EOTL ) )
 					{
 						TFGameRules()->DropBonusDuck( pPlayer->GetAbsOrigin(), pPlayer, NULL, NULL, false, true );
@@ -344,6 +345,7 @@ void CCaptureZone::Capture( CBaseEntity *pOther )
 					{
 						TFGameRules()->DropHalloweenSoulPackToTeam( 5, GetAbsOrigin(), pPlayer->GetTeamNumber(), TEAM_SPECTATOR );
 					}
+				#endif
 				}
 			}
 		}

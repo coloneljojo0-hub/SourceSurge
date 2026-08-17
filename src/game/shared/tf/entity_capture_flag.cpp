@@ -40,7 +40,6 @@ extern ConVar tf_rd_flag_ui_mode;
 #include "nav_mesh/tf_nav_mesh.h"
 #include "player_vs_environment/tf_population_manager.h"
 #include "tf_logic_robot_destruction.h"
-#include "tf_logic_halloween_2014.h"
 extern ConVar tf_flag_caps_per_round;
 extern ConVar tf_mvm_endless_bomb_reset;
 extern ConVar tf_rd_min_points_to_steal;
@@ -2379,6 +2378,8 @@ void CCaptureFlag::Think( void )
 
 	if ( m_nType == TF_FLAGTYPE_RESOURCE_CONTROL )
 	{
+		// Halloween Doomsday minigame logic removed - CTFMinigameLogic no longer exists
+#if 0
 		if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 		{
 			if ( TFGameRules()->DoomsdayTicketTimerElapsed() )
@@ -2395,6 +2396,7 @@ void CCaptureFlag::Think( void )
 				}
 			}
 		}
+#endif
 	}
 
 	if ( IsStolen() && TFGameRules() && TFGameRules()->IsPowerupMode() && IsPoisonous() && !pPlayer->m_Shared.InCond( TF_COND_MARKEDFORDEATH ) )

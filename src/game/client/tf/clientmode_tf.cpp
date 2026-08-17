@@ -348,11 +348,15 @@ void CTFModeManager::LevelShutdown( void )
 	extern void CL_Training_LevelShutdown();
 	extern void CL_Coaching_LevelShutdown();
 	extern void CL_Consumables_LevelShutdown();
+#if 0 // Halloween disabled for Source Surge
 	extern void CL_Halloween_LevelShutdown();
+#endif
 	CL_Training_LevelShutdown();
 	CL_Coaching_LevelShutdown();
 	CL_Consumables_LevelShutdown();
+#if 0 // Halloween disabled for Source Surge
 	CL_Halloween_LevelShutdown();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -421,10 +425,6 @@ void ClientModeTFNormal::Init()
 	Assert( m_pMenuTauntSelection );
 
 	m_pMenuUpgradePanel = ( CHudUpgradePanel* )GET_HUDELEMENT( CHudUpgradePanel );
-
-
-	m_pMenuSpell = ( CHudSpellMenu * )GET_HUDELEMENT( CHudSpellMenu);
-	Assert( m_pMenuSpell );
 
 	m_pEurekaTeleportMenu = ( CHudEurekaEffectTeleportMenu * )GET_HUDELEMENT( CHudEurekaEffectTeleportMenu );
 	Assert( m_pEurekaTeleportMenu  );

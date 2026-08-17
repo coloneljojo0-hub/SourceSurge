@@ -24,7 +24,6 @@
 #include "fmtstr.h"
 #include "teamplayroundbased_gamerules.h"
 #include "tf_gamerules.h"
-#include "tf_logic_halloween_2014.h"
 #include "c_tf_team.h"
 #include "tf_badge_panel.h"
 
@@ -195,11 +194,13 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		// we want to suppress the winreason for sd_doomsday_event and plr_hightower_event
 		if ( TFGameRules() )
 		{
+#if 0
 			if ( ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) && CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() ) ||
 				 ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_HIGHTOWER ) ) )
 			{
 				iWinReason = WINREASON_NONE;
 			}
+#endif
 		}
 
 		// this is an area defense, but not a round win, if this was a successful defend until time limit but not a complete round

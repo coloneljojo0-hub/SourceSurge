@@ -18,7 +18,6 @@
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weaponbase.h"
 #include "tf_gamerules.h"
-#include "tf_logic_halloween_2014.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -92,8 +91,10 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 	if ( pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
 		return false;
 
+#if 0
 	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
 		return false;
+#endif
 
 	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
 		return false;

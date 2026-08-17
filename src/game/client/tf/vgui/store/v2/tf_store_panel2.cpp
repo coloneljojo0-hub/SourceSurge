@@ -9,7 +9,6 @@
 #include "store/v2/tf_store_panel2.h"
 #include "store/v2/tf_store_page2.h"
 #include "store/v2/tf_store_page_maps2.h"
-#include "store/store_page_halloween.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
@@ -94,14 +93,18 @@ CStorePage *CTFStorePanel2::CreateStorePage( const CEconStoreCategoryManager::St
 {
 	if ( pPageData )
 	{
+#if 0
 		if ( !Q_strcmp( pPageData->m_pchPageClass, "CStorePage_SpecialPromo" ) )
 			return new CTFStorePage_SpecialPromo( this, pPageData );
+#endif
 
 		if ( !Q_strcmp( pPageData->m_pchPageClass, "CStorePage_Maps" ) )
 			return new CTFStorePage_Maps2( this, pPageData );
 
+#if 0
 		if ( !Q_strcmp( pPageData->m_pchPageClass, "CStorePage_Popular" ) )
 			return new CTFStorePage_Popular( this, pPageData );
+#endif
 	}
 
 	// Default, standard store page.

@@ -95,7 +95,6 @@
 #include "tf_shared_content_manager.h"
 #include "baseanimatedtextureproxy.h"
 #include "econ_entity.h"
-#include "halloween/tf_weapon_spellbook.h"
 #include "tf_weapon_grapplinghook.h"
 #include "tf_logic_robot_destruction.h"
 #include "econ_notifications.h"
@@ -11075,6 +11074,7 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 		{
 
 			// ADD EconNotification to equip spellbook here
+#if 0 // Halloween/spellbook disabled for Source Surge
 			if ( TFGameRules() && TFGameRules()->IsUsingSpells() )
 			{
 				int iCount = NotificationQueue_Count( &CEquipSpellbookNotification::IsNotificationType );
@@ -11095,8 +11095,10 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 					NotificationQueue_Remove( &CEquipSpellbookNotification::IsNotificationType );
 				}
 			}
+			else
+#endif
 			// ADD EconNotification to equip grapplinghook here
-			else if ( TFGameRules() && TFGameRules()->IsUsingGrapplingHook() )
+			if ( TFGameRules() && TFGameRules()->IsUsingGrapplingHook() )
 			{
 				int iCount = NotificationQueue_Count( &CEquipGrapplingHookNotification::IsNotificationType );
 				CEconItemView *pItem = TFInventoryManager()->GetItemInLoadoutForClass( event->GetInt( "class"), LOADOUT_POSITION_ACTION );

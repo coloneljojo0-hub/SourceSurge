@@ -13,7 +13,6 @@
 #include "clientmode_shared.h"
 #include "tf_viewport.h"
 #include "GameUI/IGameUI.h"
-#include "halloween/tf_weapon_spellbook.h"
 #include "tf_hud_teamgoal_tournament.h"
 
 class CHudMenuEngyBuild;
@@ -24,6 +23,7 @@ class CItemQuickSwitchPanel;
 class CHudEurekaEffectTeleportMenu;
 class CHudMenuTauntSelection;
 class CHudInspectPanel;
+class C_TFPlayer;
 class CHudUpgradePanel;
 #if defined( _X360 )
 class CTFClientScoreBoardDialog;
@@ -123,8 +123,7 @@ private:
 	CHudMenuEngyDestroy 	*m_pMenuEngyDestroy;
 	CHudMenuSpyDisguise 	*m_pMenuSpyDisguise;
 	CHudMenuTauntSelection	*m_pMenuTauntSelection;
-	CHudUpgradePanel		*m_pMenuUpgradePanel;
-	CHudSpellMenu			*m_pMenuSpell;
+	CHudUpgradePanel			*m_pMenuUpgradePanel;
 	CHudEurekaEffectTeleportMenu *m_pEurekaTeleportMenu;
 	CHudTeamGoalTournament	*m_pTeamGoalTournament;
 

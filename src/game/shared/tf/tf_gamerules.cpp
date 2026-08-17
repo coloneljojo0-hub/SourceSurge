@@ -81,47 +81,34 @@
 	#include "tf_gcmessages.h"
 	#include "vote_controller.h"
 	#include "tf_voteissues.h"
-	#include "halloween/headless_hatman.h"
-	#include "halloween/ghost/ghost.h"
-	#include "halloween/eyeball_boss/eyeball_boss.h"
-	#include "halloween/merasmus/merasmus.h"
-	#include "halloween/merasmus/merasmus_dancer.h"
-	#include "tf_extra_map_entity.h"
+	// Halloween, MVM, and Raid includes removed for Source Surge
 	#include "tf_weapon_grenade_pipebomb.h"
 	#include "tf_weapon_flaregun.h"
 	#include "tf_weapon_sniperrifle.h"
 	#include "tf_weapon_knife.h"
 	#include "tf_weapon_jar.h"
-	#include "halloween/tf_weapon_spellbook.h"
-	
+	// Halloween spellbook, MVM, and Raid includes removed for Source Surge
+
 	#include "player_vs_environment/tf_population_manager.h"
 	#include "player_vs_environment/monster_resource.h"
 	#include "util_shared.h"
 	#include "gc_clientsystem.h"
 
-	#include "raid/tf_raid_logic.h"
-	#include "player_vs_environment/tf_boss_battle_logic.h"
-	#include "player_vs_environment/tf_mann_vs_machine_logic.h"
-	#include "player_vs_environment/tf_upgrades.h"
+	// Halloween, MVM, and Raid includes removed for Source Surge
 
-	#include "tf_wheel_of_doom.h"
-	#include "tf_halloween_souls_pickup.h"
-	#include "halloween/zombie/zombie.h"
 	#include "teamplay_round_timer.h"
-	#include "halloween/spell/tf_spell_pickup.h"
 	#include "tf_weapon_laser_pointer.h"
 	#include "effect_dispatch_data.h"
 	#include "tf_fx.h"
 	#include "econ_game_account_server.h"
-	#include "tf_logic_halloween_2014.h"
+	// Halloween includes removed for Source Surge
 	#include "tf_obj_sentrygun.h"
-	#include "entity_halloween_pickup.h"
 	#include "entity_rune.h"
 	#include "func_powerupvolume.h"
 	#include "workshop/maps_workshop.h"
 	#include "tf_passtime_logic.h"
 	#include "cdll_int.h"
-	#include "halloween/halloween_gift_spawn_locations.h"
+	// Halloween includes removed for Source Surge
 	#include "tf_weapon_invis.h"
 	#include "tf_gc_server.h"
 	#include "gcsdk/msgprotobuf.h"
@@ -3679,6 +3666,7 @@ void CTFGameRules::Precache( void )
 
 	// The Halloween bosses get spawned in code, so they don't get a chance to precache
 	// when the map loads.  We'll do the precaching for them here.
+#if 0 // Halloween disabled for Source Surge
 	if( IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
 	{
 		CMerasmus::PrecacheMerasmus();
@@ -3703,6 +3691,7 @@ void CTFGameRules::Precache( void )
 		CHeadlessHatman::PrecacheHeadlessHatman();
 		CMerasmus::PrecacheMerasmus();
 	}
+#endif
 
 	if ( MapHasPrefix( STRING( gpGlobals->mapname ), "mvm_" ) )
 	{
@@ -3734,6 +3723,7 @@ void CTFGameRules::LevelInitPostEntity( void )
 
 	if ( IsHolidayActive( kHoliday_Halloween ) )
 	{
+#if 0
 		for ( int i=0; i<IHalloweenGiftSpawnAutoList::AutoList().Count(); ++i )
 		{
 			CHalloweenGiftSpawnLocation* pGift = static_cast< CHalloweenGiftSpawnLocation* >( IHalloweenGiftSpawnAutoList::AutoList()[i] );
@@ -3743,6 +3733,7 @@ void CTFGameRules::LevelInitPostEntity( void )
 
 		// Ask Halloween System if there are any locations
 		AddHalloweenGiftPositionsForMap( STRING(gpGlobals->mapname), m_halloweenGiftSpawnLocations );
+#endif
 	}
 
 	m_flMatchSummaryTeleportTime = -1.f;
@@ -4467,7 +4458,9 @@ void CTFGameRules::Activate()
 		tf_gamemode_tc.SetValue( 1 );
 	}
 	
+#if 0
 	CMannVsMachineLogic *pMannVsMachineLogic = dynamic_cast< CMannVsMachineLogic * >( gEntList.FindEntityByClassname( NULL, "tf_logic_mann_vs_machine" ) );
+#endif
 	CTeamTrainWatcher *pTrainWatch = dynamic_cast<CTeamTrainWatcher*> ( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
 	bool bFlag = ICaptureFlagAutoList::AutoList().Count() > 0;
 	if ( CTFRobotDestructionLogic::GetRobotDestructionLogic() )
@@ -4485,12 +4478,14 @@ void CTFGameRules::Activate()
 			m_nGameType.Set( TF_GAMETYPE_PD );
 		}
 	}
+#if 0
 	else if ( pMannVsMachineLogic )
 	{
 		m_bPlayingMannVsMachine.Set( true );
 		tf_gamemode_mvm.SetValue( 1 );
 		m_nGameType.Set( TF_GAMETYPE_MVM );
 	}
+#endif
 	else if ( MapHasPrefix( STRING( gpGlobals->mapname ), "sd_" ) )
 	{
 		m_bPlayingSpecialDeliveryMode.Set( true );
@@ -4870,6 +4865,7 @@ void CTFGameRules::CleanUpMap( void )
 
 	// If we're in a mode with upgrades, we force the players to recreate their weapons on next spawn.
 	// This clears out any weapon upgrades they had in the previous round.
+#if 0
 	if ( g_hUpgradeEntity )
 	{
 		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
@@ -4884,6 +4880,7 @@ void CTFGameRules::CleanUpMap( void )
 			pTFPlayer->RemovePlayerAttributes( false );
 		}
 	}
+#endif
 #endif
 }
 
@@ -5089,10 +5086,12 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 	if ( IsMannVsMachineMode() )
 	{
+#if 0
 		if ( g_hMannVsMachineLogic )
 		{
 			g_hMannVsMachineLogic->SetupOnRoundStart();
 		}
+#endif
 	}
 
 	m_redPayloadToPush = NULL;
@@ -8882,6 +8881,7 @@ void CTFGameRules::PeriodicHalloweenUpdate()
 	CollectPlayers( &playerVector );
 	FOR_EACH_VEC( playerVector, i )
 	{
+#if 0
 		Vector vLocation = m_halloweenGiftSpawnLocations.Element( RandomInt( 0, m_halloweenGiftSpawnLocations.Count() - 1 ) );
 		CHalloweenGiftPickup *pGift = assert_cast<CHalloweenGiftPickup*>( CBaseEntity::CreateNoSpawn( "tf_halloween_gift_pickup", vLocation, vec3_angle, NULL ) );
 		if ( pGift )
@@ -8889,6 +8889,7 @@ void CTFGameRules::PeriodicHalloweenUpdate()
 			pGift->SetTargetPlayer( playerVector[i] );
 			DispatchSpawn( pGift );
 		}
+#endif
 	}
 	
 }
@@ -8925,6 +8926,7 @@ static bool isZombieMobForceSpawning = false;
 //-----------------------------------------------------------------------------
 void CTFGameRules::SpawnZombieMob( void )
 {
+#if 0
 	if ( !tf_halloween_zombie_mob_enabled.GetBool() )
 	{
 		return;
@@ -8980,7 +8982,7 @@ void CTFGameRules::SpawnZombieMob( void )
 	{
 		m_zombieMobTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
 
-		CUtlVector< CTFNavArea * > ambushVector;	// vector of hidden but near-to-victim areas
+		CUtlVector< CNavArea * > ambushVector;	// vector of hidden but near-to-victim areas
 
 		for( int i=0; i<playerVector.Count(); ++i )
 		{
@@ -9044,6 +9046,7 @@ void CTFGameRules::SpawnZombieMob( void )
 			break;
 		}
 	}
+#endif
 }
 
 //---------------------------------------------------------------------------------------------------------
@@ -9058,6 +9061,7 @@ CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_CHEAT )
 
 CON_COMMAND_F( cc_spawn_merasmus_at_level, "Force Merasmus to spawn at a specific difficulty level", FCVAR_CHEAT )
 {
+#if 0
 	if( args.ArgC() != 2 )
 	{
 		DevMsg( "Must specify a level\n" );
@@ -9067,6 +9071,7 @@ CON_COMMAND_F( cc_spawn_merasmus_at_level, "Force Merasmus to spawn at a specifi
 	CMerasmus::DBG_SetLevel( atoi(args[1]) );
 	
 	tf_halloween_force_boss_spawn( args );
+#endif
 }
 
 
@@ -9077,6 +9082,7 @@ extern ConVar tf_halloween_bot_min_player_count;
 //-----------------------------------------------------------------------------
 void CTFGameRules::SpawnHalloweenBoss( void )
 {
+#if 0
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
 		return;
 
@@ -9295,6 +9301,7 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 			m_halloweenBossTimer.Start( 0.5f * RandomFloat( 0.0f, bossInterval + bossIntervalVariation ) );	
 		}
 	}
+#endif
 }
 
 
@@ -9303,6 +9310,7 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinDuration, float flMaxDuration )
 {
+#if 0
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
 		return;
 
@@ -9387,6 +9395,7 @@ void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinDuration, float 
 
 		m_ghostVector.AddToTail( ghost );
 	}
+#endif
 }
 
 static const int k_RecentPlayerInfoMaxTime = 7200;	// 2 hours
@@ -9518,7 +9527,9 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 	BaseClass::FrameUpdatePostEntityThink();
 
 	// Update 1v1 mode logic (countdown timers, player presence, etc.)
+#if 0 // C1v1Gamemode not in server build
 	g_1v1Gamemode.Update();
+#endif
 
 	RunPlayerConditionThink();
 }
@@ -9892,6 +9903,7 @@ void CTFGameRules::SetWinningTeam( int team, int iWinReason, bool bForceMapReset
 	}
 #endif
 
+#if 0
 	if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_DOOMSDAY ) && CTFMinigameLogic::GetMinigameLogic() )
 	{
 		CTFMiniGame *pMiniGame = CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame();
@@ -9906,6 +9918,7 @@ void CTFGameRules::SetWinningTeam( int team, int iWinReason, bool bForceMapReset
 			}
 		}
 	}
+#endif
 
 	if ( IsPasstimeMode() )
 	{
@@ -9981,7 +9994,7 @@ void CTFGameRules::GoToIntermission( void )
 void CTFGameRules::RecalculateTruce( void )
 {
 	bool bTruceActive = false;
-
+#if 0
 	// Call a truce if the teams are fighting a Halloween boss
 	if ( IsHolidayActive( kHoliday_Halloween ) )
 	{
@@ -10016,7 +10029,7 @@ void CTFGameRules::RecalculateTruce( void )
 			}
 		}
 	}
-
+#endif
 
 	if ( m_bTruceActive != bTruceActive )
 	{
@@ -11182,6 +11195,7 @@ void CTFGameRules::DropHalloweenSoulPackToTeam( int nAmount, const Vector& vecPo
 //-----------------------------------------------------------------------------
 void CTFGameRules::DropHalloweenSoulPack( int nAmount, const Vector& vecSource, CBaseEntity *pTarget, int nSourceTeam )
 {
+#if 0
 	QAngle angles(0,0,0);
 	CHalloweenSoulPack *pSoulsPack = assert_cast<CHalloweenSoulPack*>( CBaseEntity::CreateNoSpawn( "halloween_souls_pack", vecSource, angles, NULL ) );
 
@@ -11193,6 +11207,7 @@ void CTFGameRules::DropHalloweenSoulPack( int nAmount, const Vector& vecSource, 
 
 		DispatchSpawn( pSoulsPack );
 	}
+#endif
 }
 
 
@@ -11212,6 +11227,7 @@ bool CTFGameRules::ShouldDropSpellPickup()
 //-----------------------------------------------------------------------------
 void CTFGameRules::DropSpellPickup( const Vector& vPosition, int nTier /*= 0*/ ) const
 {
+#if 0
 	if ( !IsUsingSpells() )
 		return;
 
@@ -11229,6 +11245,7 @@ void CTFGameRules::DropSpellPickup( const Vector& vPosition, int nTier /*= 0*/ )
 		Vector vecVelocity = vecImpulse * 500.f;
 		pSpellPickup->DropSingleInstance( vecVelocity, NULL, 0 );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -11310,6 +11327,7 @@ ConVar tf_duck_edict_limit( "tf_duck_edict_limit", "1900", FCVAR_REPLICATED, "Ma
 ConVar tf_duck_edict_warning( "tf_duck_edict_warning", "1800", FCVAR_REPLICATED, "Maximum number of edicts allowed before slowing duck spawn rate" );
 void CTFGameRules::DropBonusDuck( const Vector& vPosition, CTFPlayer *pTFCreator /*=NULL*/, CTFPlayer *pAssister /*=NULL*/, CTFPlayer *pTFVictim /*=NULL*/, bool bCrit /*=false*/, bool bObjective /*=false*/) const
 {
+#if 0 // Summer event ducks disabled for Source Surge
 	if ( gEntList.NumberOfEdicts() > tf_duck_edict_limit.GetInt() )
 	{
 		Warning( "Warning: High level of Edicts, Not spawning Ducks \n" );
@@ -11493,6 +11511,7 @@ void CTFGameRules::DropBonusDuck( const Vector& vPosition, CTFPlayer *pTFCreator
 			}
 		}
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -11818,7 +11837,9 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	// credit for kill-eating weapons and anything else that might care
 	if ( pTFPlayerScorer && pTFPlayerVictim && pTFPlayerScorer != pTFPlayerVictim )
 	{
+#if 0 // CPlayerStatsManager not in server build
 		g_PlayerStatsManager.AddKill(pTFPlayerScorer); //for stats
+#endif
 		// Increment the server-side kill count for this weapon -- this is used for honorbound
 		// weapons and has nothing to do with strange weapons/stats.
 		pTFPlayerScorer->IncrementKillCountSinceLastDeploy( info );
@@ -15443,6 +15464,7 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 		}
 		else if ( FStrEq( pszCommand, "MVM_Upgrade" ) )
 		{
+#if 0 // MVM upgrade zone — g_hUpgradeEntity not available
 			if ( GameModeUsesUpgrades() )
 			{
 				if ( IsMannVsMachineMode() )
@@ -15502,6 +15524,7 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 					}
 				}
 			}
+#endif
 		}
 		else if ( FStrEq( pszCommand, "MvM_UpgradesBegin" ) )
 		{
@@ -15539,6 +15562,7 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 		}
 		else if ( FStrEq( pszCommand, "MVM_Respec" ) )
 		{
+#if 0 // MVM respec — g_hUpgradeEntity not available
 			if ( GameModeUsesUpgrades() && IsMannVsMachineRespecEnabled() && CanPlayerUseRespec( pTFPlayer ) )
 			{
 				if ( IsMannVsMachineMode() )
@@ -15561,6 +15585,7 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 					pTFPlayer->ForceRespawn();
 				}
 			}
+#endif
 		}
 		else if ( FStrEq( pszCommand, "use_action_slot_item_server" ) )
 		{
@@ -20030,6 +20055,7 @@ void CTFHolidayEntity::InputHalloweenTeleportToHell( inputdata_t &inputdata )
 
 void CTFHolidayEntity::Teleport() 
 {
+#if 0 // Halloween spellbook / RemoveAll2013HalloweenTeleportSpellsInMidFlight — not available
 	RemoveAll2013HalloweenTeleportSpellsInMidFlight();
 
 	const char *pszRedString	= ( m_nWinningTeam == TF_TEAM_RED ) ? "winner" : "loser";
@@ -20101,7 +20127,7 @@ void CTFHolidayEntity::Teleport()
 				continue;
 
 			pWeapon->GiveDefaultAmmo();
-
+		
 			if ( pWeapon->IsEnergyWeapon() )
 			{
 				pWeapon->WeaponRegenerate();
@@ -20125,6 +20151,7 @@ void CTFHolidayEntity::Teleport()
 		SetContextThink( &CTFHolidayEntity::HalloweenTeleportToHellDanceThink, gpGlobals->curtime + flThinkDelay, "DanceThink1" );
 		SetContextThink( &CTFHolidayEntity::HalloweenTeleportToHellDanceThink, gpGlobals->curtime + flThinkDelay + flDanceDuration, "DanceThink2" );
 	}
+#endif
 }
 
 
@@ -22361,6 +22388,7 @@ bool CTFGameRules::PointsMayBeCaptured( void )
 	{
 		switch ( GetHalloweenScenario() )
 		{
+#if 0 // CEyeballBoss / CMerasmus not available
 		case HALLOWEEN_SCENARIO_VIADUCT:
 		{
 			// the eyeball prevents point capturing while he's in play
@@ -22379,6 +22407,7 @@ bool CTFGameRules::PointsMayBeCaptured( void )
 			}
 		}
 		break;
+#endif
 		}
 	}
 #endif // GAME_DLL

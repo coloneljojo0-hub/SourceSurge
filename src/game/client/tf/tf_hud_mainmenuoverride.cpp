@@ -22,6 +22,8 @@
 #include <vgui_controls/AnimationController.h>
 #include "store/store_panel.h"
 #include "gc_clientsystem.h"
+#include "tf_hud_modmenu.h"
+#include "tf_hud_playmenu.h"
 #include <vgui_controls/ScrollBarSlider.h>
 #include "filesystem.h"
 #include "tf_hud_disconnect_prompt.h"
@@ -70,8 +72,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-// Forward declaration — defined in tf_hud_modmenu.cpp
-void ToggleModMenu();
+// Forward declarations removed for Source Surge
 
 CMOTDManager CHudMainMenuOverride::m_MOTDManager;
 
@@ -152,8 +153,7 @@ void PromptOrFireCommand( const char* pszCommand )
 	}
 }
 
-// Forward declaration — defined in tf_hud_playmenu.cpp
-void ToggleplayMenu();
+// Forward declarations removed for Source Surge
 
 //-----------------------------------------------------------------------------
 // Purpose:

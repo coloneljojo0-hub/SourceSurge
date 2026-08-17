@@ -27,10 +27,7 @@
 #include "tf_shareddefs.h"
 #include "tf_hud_playerstatus.h"
 #include "tf_gamerules.h"
-#include "tf_logic_halloween_2014.h"
 #include "tf_logic_player_destruction.h"
-
-#include "tf_wheel_of_doom.h"
 
 #include "confirm_dialog.h"
 
@@ -1012,6 +1009,7 @@ void CTFHudPlayerHealth::OnThink()
 
 void CTFHudPlayerHealth::UpdateHalloweenStatus( void )
 {
+#if 0 // Halloween disabled for Source Surge
 	if ( TFGameRules()->IsHalloweenEffectStatusActive() )
 	{
 		int status = TFGameRules()->GetHalloweenEffectStatus();
@@ -1046,10 +1044,8 @@ void CTFHudPlayerHealth::UpdateHalloweenStatus( void )
 	{
 		m_pWheelOfDoomImage->SetVisible( false );
 	}
+#endif
 }
-
-
-DECLARE_HUDELEMENT( CTFHudPlayerStatus );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1090,8 +1086,10 @@ bool CTFHudPlayerStatus::ShouldDraw( void )
 	if ( pTFPlayer && pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
 		return false;
 
+#if 0 // Halloween disabled for Source Surge
 	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
 		return false;
+#endif
 
 	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
 		return false;

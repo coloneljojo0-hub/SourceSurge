@@ -17,11 +17,8 @@
 #include "decals.h"
 #include "tf_player.h"
 #include "tf_gamestats.h"
-#include "tf_pumpkin_bomb.h"
 #include "tf_weapon_shovel.h"
 #include "player_vs_environment/tf_tank_boss.h"
-#include "halloween/halloween_base_boss.h"
-#include "halloween/merasmus/merasmus_trick_or_treat_prop.h"
 #include "tf_logic_robot_destruction.h"
 
 #include "tf_gamerules.h"
@@ -425,7 +422,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pOther
 	if ( !pOtherAnim )
 		return false;
 
-	bool bBreakArrow = IsBreakable() && ( ( dynamic_cast< CTFTankBoss* >( pOther ) != NULL ) || ( dynamic_cast< CHalloweenBaseBoss* >( pOther ) != NULL ) );
+	bool bBreakArrow = IsBreakable() && ( dynamic_cast< CTFTankBoss* >( pOther ) != NULL );
 
 	// Position the arrow so its on the bone, within a reasonable region defined by the bbox.
 	if ( !m_bPenetrate && !bBreakArrow )
@@ -742,9 +739,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		return;
 
 	bool bShield = pOther->IsCombatItem() && !InSameTeam( pOther );
-	CTFPumpkinBomb *pPumpkinBomb = dynamic_cast< CTFPumpkinBomb * >( pOther );
-
-	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) && !pPumpkinBomb && !bShield )
+	CBaseEntity *pPumpkinBomb = nullptr;
+	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) && !bShield )
 		return;
 
 	// test against combat characters, which include players, engineer buildings, and NPCs
@@ -760,9 +756,9 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		}
 	}
 
-	CTFMerasmusTrickOrTreatProp *pMerasmusProp = dynamic_cast< CTFMerasmusTrickOrTreatProp* >( pOther );
+	CBaseEntity *pMerasmusProp = nullptr;
 	CTFRobotDestruction_Robot *pRobot = dynamic_cast< CTFRobotDestruction_Robot* >( pOther );
-	if ( pOther->IsWorld() || ( !pOtherCombatCharacter && !pPumpkinBomb && !pMerasmusProp && !bShield && !pRobot ) )
+	if ( pOther->IsWorld() || ( !pOtherCombatCharacter && !bShield && !pRobot ) )
 	{
 		// Check to see if we struck the skybox.
 		CheckSkyboxImpact( pOther );

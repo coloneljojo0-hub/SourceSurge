@@ -26,7 +26,6 @@
 #include "fmtstr.h"
 #include "teamplayroundbased_gamerules.h"
 #include "tf_gamerules.h"
-#include "tf_logic_halloween_2014.h"
 #include "tf_playermodelpanel.h"
 #include "tf_mapinfo.h"
 #include "c_tf_team.h"

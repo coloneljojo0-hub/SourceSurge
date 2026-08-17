@@ -29,14 +29,13 @@
 #include "tf_weapon_medigun.h"
 #include "tf_weapon_throwable.h"
 #include "tf_weapon_smg.h"
-#include "halloween/tf_weapon_spellbook.h"
-#include "tf_logic_halloween_2014.h"
 #include <game/client/iviewport.h>
 #include "tf_weapon_rocketpack.h"
 #include "tf_weapon_bonesaw.h"
 #include "tf_weapon_slap.h"
 
 #include <vgui_controls/ImagePanel.h>
+#include <vgui/IVGui.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -350,6 +349,7 @@ void CHudItemEffectMeter::CreateHudElementsForClass( C_TFPlayer* pPlayer, CUtlVe
 	// Kill Streak
 	DECLARE_ITEM_EFFECT_METER( CTFWeaponBase, TF_WEAPON_NONE, false, "resource/UI/HudItemEffectMeter_KillStreak.res" );
 
+#if 0
 	DECLARE_ITEM_EFFECT_METER( CTFSpellBook, TF_WEAPON_SPELLBOOK, true, "resource/UI/HudItemEffectMeter_KartCharge.res" );
 	/*hNewMeter = new CHudItemEffectMeter_HalloweenSouls( pszElementName, pPlayer );
 	if ( hNewMeter )
@@ -358,6 +358,7 @@ void CHudItemEffectMeter::CreateHudElementsForClass( C_TFPlayer* pPlayer, CUtlVe
 		outMeters.AddToHead( hNewMeter );
 		hNewMeter->SetVisible( false );
 	}*/
+#endif
 
 	// Mvm canteen
 	hNewMeter = new CHudItemEffectMeter_Weapon< CTFPowerupBottle >( pszElementName, pPlayer, TF_WEAPON_NONE, true, "resource/UI/HudItemEffectMeter_PowerupBottle.res" );
@@ -465,10 +466,12 @@ bool CHudItemEffectMeter::ShouldDraw( void )
 	{
 		bShouldDraw = false;
 	}
+#if 0
 	else if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
 	{
 		bShouldDraw = false;
 	}
+#endif
 	else if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
 	{
 		bShouldDraw = false;
@@ -1561,6 +1564,7 @@ int CHudItemEffectMeter_Weapon<CTFRocketLauncher_AirStrike>::GetCount( void )
 	}
 }
 
+#if 0
 //-----------------------------------------------------------------------------
 template <>
 bool CHudItemEffectMeter_Weapon<CTFSpellBook>::IsEnabled( void )
@@ -1636,6 +1640,7 @@ bool CHudItemEffectMeter_Weapon<CTFSpellBook>::ShouldDraw( void )
 
 	return CHudItemEffectMeter::ShouldDraw();
 }
+#endif
 
 
 //-----------------------------------------------------------------------------

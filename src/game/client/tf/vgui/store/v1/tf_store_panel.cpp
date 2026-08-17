@@ -8,7 +8,6 @@
 #include "cbase.h"
 #include "store/v1/tf_store_page.h"
 #include "store/v1/tf_store_panel.h"
-#include "store/store_page_halloween.h"
 #include "store/store_page_new.h"
 #include "store/v1/tf_store_page_maps.h"
 #include "store/store_viewcart.h"
@@ -54,14 +53,18 @@ CStorePage *CTFStorePanel1::CreateStorePage( const CEconStoreCategoryManager::St
 {
 	if ( pPageData )
 	{
+#if 0
 		if ( !Q_strcmp( pPageData->m_pchPageClass, "CStorePage_SpecialPromo" ) )
 			return new CTFStorePage_SpecialPromo( this, pPageData );
+#endif
 
 		if ( !Q_strcmp( pPageData->m_pchPageClass, "CStorePage_Maps" ) )
 			return new CTFStorePage_Maps( this, pPageData );
 
+#if 0
 		if ( !Q_strcmp( pPageData->m_pchPageClass, "CStorePage_Popular" ) )
 			return new CTFStorePage_Popular( this, pPageData );
+#endif
 	}
 
 	// Default, standard store page.

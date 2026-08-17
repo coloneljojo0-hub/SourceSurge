@@ -15,7 +15,6 @@
 #include "world.h"
 #include "explode.h"
 #include "tf_gamestats.h"
-#include "tf_halloween_souls_pickup.h"
 #include "tf_fx.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1116,10 +1115,12 @@ void CObjectCartDispenser::DropSpellPickup()
 
 void CObjectCartDispenser::DropDuckPickup()
 {
+#if 0 // DropBonusDuck removed for Source Surge
 	if ( TFGameRules()->IsHolidayActive( kHoliday_EOTL ) && TFGameRules()->ShouldDropBonusDuck() )
 	{
 		TFGameRules()->DropBonusDuck( GetAbsOrigin() );
 	}
+#endif
 }
 
 void CObjectCartDispenser::DispenseSouls()

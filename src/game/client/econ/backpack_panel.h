@@ -23,7 +23,7 @@ class CDynamicRecipePanel;
 class CItemSlotPanel;
 class CStrangeCountTransferPanel;
 class CCollectionCraftingPanel;
-class CHalloweenOfferingPanel;
+// Halloween offering panel removed for Source Surge
 class CCraftCommonStatClockPanel;
 class CTFStorePreviewItemPanel2;
 
@@ -253,7 +253,7 @@ protected:
 
 	DHANDLE<CStrangeCountTransferPanel> m_pStrangeToolPanel;
 	DHANDLE<CCollectionCraftingPanel> m_pCollectionCraftPanel;
-	DHANDLE<CHalloweenOfferingPanel> m_pHalloweenOfferingPanel;
+	// Halloween offering panel removed for Source Surge
 	DHANDLE<CCraftCommonStatClockPanel> m_pMannCoTradePanel;			// Make this Panel Generic
 	CTFStorePreviewItemPanel2 *m_pInspectCosmeticPanel;
 	vgui::Menu *m_pContextMenu;

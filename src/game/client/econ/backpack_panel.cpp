@@ -41,7 +41,6 @@
 #include "store/store_panel.h"
 #include "strange_count_transfer_panel.h"
 #include "collection_crafting_panel.h"
-#include "halloween_offering_panel.h"
 #include "store/v2/tf_store_preview_item2.h"
 #include "item_ad_panel.h"
 #include "client_community_market.h"
@@ -424,7 +423,7 @@ CBackpackPanel::CBackpackPanel( vgui::Panel *parent, const char *panelName ) : C
 
 	m_pInspectCosmeticPanel = new CTFStorePreviewItemPanel2( this, "Resource/UI/econ/InspectionPanel_Cosmetic.res", "storepreviewitem", NULL );
 	m_pCollectionCraftPanel = NULL;
-	m_pHalloweenOfferingPanel = NULL;
+	// Halloween offering panel removed for Source Surge
 	m_pMannCoTradePanel = NULL;
 
 	CancelToolSelection();
@@ -1025,10 +1024,12 @@ void CBackpackPanel::OnShowPanel( bool bVisible, bool bReturningFromArmory )
 		m_pCollectionCraftPanel->SetVisible( false );
 	}
 
+#if 0
 	if ( m_pHalloweenOfferingPanel )
 	{
 		m_pHalloweenOfferingPanel->SetVisible( false );
 	}
+#endif
 
 	if ( m_pMannCoTradePanel )
 	{
@@ -3695,6 +3696,7 @@ void CBackpackPanel::DoCraftUpCollection()
 //-----------------------------------------------------------------------------
 void CBackpackPanel::DoHalloweenOffering()
 {
+#if 0
 	// Open it up!
 	if ( !m_pHalloweenOfferingPanel )
 	{
@@ -3704,6 +3706,7 @@ void CBackpackPanel::DoHalloweenOffering()
 		// empty
 	CUtlVector< const CEconItemView* > vecSelectedItems;
 	m_pHalloweenOfferingPanel->Show( vecSelectedItems );
+#endif
 }
 
 //-----------------------------------------------------------------------------

@@ -16,7 +16,6 @@
 #include "materialsystem/imesh.h"
 #include "materialsystem/imaterialvar.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
-#include "tf_logic_halloween_2014.h"
 #include "tf_gamerules.h"
 #include "mathlib/mathlib.h"
 
@@ -64,8 +63,10 @@ CHudTFCrosshair::~CHudTFCrosshair( void )
 bool CHudTFCrosshair::ShouldDraw( void )
 {
 	// turn off for the minigames
+#if 0
 	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
 		return false;
+#endif
 
 	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
 		return false;

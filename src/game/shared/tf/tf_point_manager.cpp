@@ -10,9 +10,7 @@
 #endif // CLIENT_DLL
 
 #ifdef GAME_DLL
-#include "tf_pumpkin_bomb.h"
 #include "tf_generic_bomb.h"
-#include "halloween/merasmus/merasmus_trick_or_treat_prop.h"
 #endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFPointManager, DT_TFPointManager );
@@ -343,9 +341,7 @@ bool CTFPointManager::UpdatePoint( tf_point_t *pPoint, int nIndex, float flDT, V
 		if ( trWorld.m_pEnt && ShouldCollide( trWorld.m_pEnt ) )
 		{
 			// Sigh...
-			bool bSpecialMagicCollide = dynamic_cast<CTFPumpkinBomb*>( trWorld.m_pEnt ) ||
-										dynamic_cast<CTFGenericBomb*>( trWorld.m_pEnt ) ||
-										dynamic_cast<CTFMerasmusTrickOrTreatProp*>( trWorld.m_pEnt );
+			bool bSpecialMagicCollide = dynamic_cast<CTFGenericBomb*>( trWorld.m_pEnt );
 	
 			if ( bSpecialMagicCollide )
 			{

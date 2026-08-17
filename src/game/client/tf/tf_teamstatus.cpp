@@ -11,7 +11,6 @@
 #include <vgui_controls/ProgressBar.h>
 
 #include "tf_gamerules.h"
-#include "tf_logic_halloween_2014.h"
 #include "c_tf_playerresource.h"
 #include "tf_playerpanel.h"
 #include "tf_teamstatus.h"

@@ -124,6 +124,7 @@ bool CTFAutobalance::AreTeamsUnbalanced()
 	if ( mp_teams_unbalance_limit.GetInt() <= 0 )
 		return false;
 
+	// ArePlayersInHell() always false since Halloween is disabled
 	if ( TFGameRules()->ArePlayersInHell() )
 		return false;
 

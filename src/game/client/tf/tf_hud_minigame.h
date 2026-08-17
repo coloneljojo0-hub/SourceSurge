@@ -13,7 +13,6 @@
 #include "hud.h"
 #include "hudelement.h"
 #include <vgui_controls/EditablePanel.h>
-#include "tf_logic_halloween_2014.h"
 
 
 //-----------------------------------------------------------------------------
@@ -31,7 +30,9 @@ public:
 
 private:
 
+#if 0
 	CTFMiniGame				*m_pActiveMinigame;
+#endif
 	char					m_szResFilename[MAX_PATH];
 };
 

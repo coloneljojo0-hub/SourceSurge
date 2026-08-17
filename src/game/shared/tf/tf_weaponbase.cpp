@@ -42,7 +42,6 @@
 #include "tf_gamestats.h"
 #include "bot/tf_bot_manager.h"
 #include "bot/tf_bot.h"
-#include "halloween/halloween_base_boss.h"
 #include "tf_fx.h"
 #include "tf_gamestats.h"
 // Client specific.
@@ -5087,9 +5086,9 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPla
 		pAttacker->m_Shared.SetDecapitations( Min( 200, iDecap + iExtraDamageOnHit ) );
 	}
 
-	// Everything else is only for player enemies or Halloween bosses
-	// We don't want buildables or the tank doing things like giving health or increasing ubercharge
-	if ( !( pVictim || dynamic_cast< CHalloweenBaseBoss* >( pVictimBaseEntity ) ) )
+	// Everything else is only for player enemies
+	// Halloween bosses removed - no longer need to check for boss entity
+	if ( !pVictim )
 	{
 		return;
 	}

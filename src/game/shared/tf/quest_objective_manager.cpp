@@ -11,7 +11,6 @@
 #include "econ_quests.h"
 #include "steamworks_gamestats.h"
 #include "tf_gamerules.h"
-#include "entity_halloween_pickup.h"
 #ifdef CLIENT_DLL
 	#include "econ_notifications.h"
 	#include "tf_item_inventory.h"
