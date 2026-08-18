@@ -5210,7 +5210,7 @@ void CTFGameRules::State_Enter_RND_RUNNING(void)
 	BaseClass::State_Enter_RND_RUNNING();
 
 #ifdef GAME_DLL
-	if (m_bWaveModeActive && !m_bWave2Active)
+	if (!m_bWaveModeActive && !m_bWave2Active)
 	{
 		Wave2_Start(m_nWaveModeDifficulty);
 	}
@@ -18646,10 +18646,22 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 			else if (!Q_stricmp(pszDiff, "nohit"))
 				nDiff = 3;
 
-			Wave2_Start(nDiff);
+			// If WaveMode is not yet active, activate it with the pending difficulty.
+						// If WaveMode is already active (e.g., from tf_wavemode_start), just ensure
+						// the difficulty matches and clear the pending diff without starting the wave.
+						if (!m_bWaveModeActive)
+						{
+							TFGameRules()->WaveMode_SetActive(true, nDiff);
+						}
+						else
+						{
+							// Ensure the difficulty is correct (in case it was changed via console).
+							m_nWaveModeDifficulty = nDiff;
+							m_nWaveModeDifficulty_Net.Set(nDiff);
+						}
 
-			// Reset so this doesn't fire again on respawn
-			tf_wavemode_pending_diff.SetValue("none");
+						// Clear the pending diff so it doesn't fire again on respawn
+						tf_wavemode_pending_diff.SetValue("none");
 		}
 	}
 

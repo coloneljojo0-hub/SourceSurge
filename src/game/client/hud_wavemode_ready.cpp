@@ -356,11 +356,23 @@ void CHudWaveModeGameOver::OnKeyCodePressed(vgui::KeyCode code)
 			V_FileBase(pszFullName, szMapName, sizeof(szMapName));
 		}
 
+		// Get the last difficulty used for the retry.
+		int nDiff = TFGameRules()->WaveMode_GetDifficultyForHUD();
+		const char *pszDiff = "hard";
+		if (nDiff == 1)
+			pszDiff = "harder";
+		else if (nDiff == 2)
+			pszDiff = "hardest";
+		else if (nDiff == 3)
+			pszDiff = "nohit";
+
 		// tf_wavemode_retry (server): saves diff, resets state, kicks bots.
-		// map: triggers full reload — player_spawn fires Wave2_Start automatically.
-		char szCmd[256];
+		// map: triggers full reload — player_spawn will see the pending diff and activate WaveMode.
+		// tf_wavemode_start <diff>: explicitly starts the wave with the given difficulty.
+		char szCmd[512];
 		Q_snprintf(szCmd, sizeof(szCmd),
-			"tf_wavemode_retry; map %s;", szMapName);
+			"tf_wavemode_retry; map %s; tf_wavemode_start %s",
+			szMapName, pszDiff);
 		engine->ClientCmd_Unrestricted(szCmd);
 		SetVisible(false);
 	}

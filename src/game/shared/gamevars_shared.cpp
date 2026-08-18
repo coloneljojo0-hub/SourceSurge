@@ -43,10 +43,10 @@ ConVar mp_allowspectators(
 
 ConVar friendlyfire(
 	"mp_friendlyfire",
-	"0",
+	"1",
 	FCVAR_REPLICATED | FCVAR_NOTIFY,
 	"Allows team members to injure other members of their team"
-	);
+);
 
 ConVar mp_fadetoblack( 
 	"mp_fadetoblack", 
