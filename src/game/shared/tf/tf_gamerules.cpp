@@ -5207,13 +5207,14 @@ void CTFGameRules::RestartTournament( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::State_Enter_RND_RUNNING(void)
 {
-	BaseClass::State_Enter_RND_RUNNING();
+    BaseClass::State_Enter_RND_RUNNING();
 
 #ifdef GAME_DLL
-	if (!m_bWaveModeActive && !m_bWave2Active)
-	{
-		Wave2_Start(m_nWaveModeDifficulty);
-	}
+    // Wave2 is started by the wavemode system when players are ready, not automatically on round start.
+    // if (!m_bWaveModeActive && !m_bWave2Active)
+    // {
+    //     Wave2_Start(m_nWaveModeDifficulty);
+    // }
 #endif
 }
 

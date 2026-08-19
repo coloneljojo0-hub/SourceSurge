@@ -32,7 +32,7 @@
 
 
 // Half-Life User Info Configuration Layout Script (stores last settings chosen, too)
-// File generated:  Mon Jul 13 13:09:51 AM
+// File generated:  Wed Aug 19 23:00:20 AM
 //
 //
 // Cvar	-	Setting
@@ -98,7 +98,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_Hitbeeps"
 		"#Tooltip_Hitbeeps"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
 
 	"tf_dingaling_volume"
@@ -148,7 +148,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_LastHitbeeps"
 		"#Tooltip_Hitbeeps"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
 
 	"tf_dingaling_lasthit_volume"
@@ -370,14 +370,14 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_UseGlowEffect"
 		"#Tooltip_UseGlowEffect"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"tf_enable_glows_after_respawn"
 	{
 		"#TF_EnableGlowsAfterRespawn"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"cl_hud_playerclass_use_playermodel"
@@ -393,7 +393,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_viewmodelfov_option"
 		"#Tooltip_viewmodelfov_option"
 		{ SLIDER 54 70 }
-		{ "54" }
+		{ "70" }
 	}
 
 	"tf_spectator_target_location"
@@ -648,7 +648,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_classautokill"
 		"#Tooltip_classautokill"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"tf_respawn_on_loadoutchanges"
@@ -656,7 +656,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_loadoutrespawn"
 		"#Tooltip_loadoutrespawn"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"cl_flipviewmodels"
@@ -672,7 +672,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_use_min_viewmodels_option"
 		"#Tooltip_use_min_viewmodels_option"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
 
 	"cl_spraydisable"
@@ -680,7 +680,7 @@ DESCRIPTION INFO_OPTIONS
 		"#GameUI_DisableSprays"
 		"#Tooltip_DisableSprays"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"tf_hide_custom_decals"
@@ -719,7 +719,7 @@ DESCRIPTION INFO_OPTIONS
 		"#Valve_SteamScreenshots"
 		"#Tooltip_SteamScreenshots"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"cl_notifications_show_ingame"
@@ -727,7 +727,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_ShowNotificationsInGame"
 		"#Tooltip_ShowNotificationsInGame"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"cl_trading_show_requests_from"
@@ -761,7 +761,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_ShowPromotionalCodesButton"
 		"#Tooltip_ShowPromotionalCodesButton"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	"category8"

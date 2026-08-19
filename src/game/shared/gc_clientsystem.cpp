@@ -149,8 +149,10 @@ void CGCClientSystem::PostInit()
 		ClientSteamContext().InstallCallback( UtlMakeDelegate( this, &CGCClientSystem::SteamLoggedOnCallback ) );
 
 		// Except when debugging internally, we really should never launch the game
-		// while not logged on!
-		AssertMsg( ClientSteamContext().BLoggedOn(), "No Steam logged on for GC setup!" );
+			// while not logged on!
+			// AssertMsg( ClientSteamContext().BLoggedOn(), "No Steam logged on for GC setup!" );
+			// For development, we allow running without Steam login.
+			// If you want to enforce Steam login, uncomment the above line.
 
 		ThinkConnection();
 	#endif

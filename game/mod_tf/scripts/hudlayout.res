@@ -1521,29 +1521,29 @@
 		"alpha"					"100"
 	}
 
-	"HudFPS"
-	{
-	"ControlName"	"CTFHudFPS"
-	"fieldName"		"HudFPS"
-	"xpos"			"r0"
-	"ypos"			"0"
-	"wide"			"70"
-	"tall"			"20"
-	"visible"		"1"
-	"enabled"		"1"
-	}
+"HudFPS"
+{
+	"ControlName"		"CTFHudFPS"
+	"fieldName"			"HudFPS"
+	"xpos"				"r0"
+	"ypos"				"0"
+	"wide"				"70"
+	"tall"				"20"
+	"visible"			"1"
+	"enabled"			"1"
+}
 
-	"HudSpeedometer"
-	{
-		"ControlName"	"CTFHudSpeedometer"
-		"fieldName"		"HudSpeedometer"
-		"xpos"			"0"
-		"ypos"			"0"
-		"wide"			"80"
-		"tall"			"16"
-		"visible"		"1"
-		"enabled"		"1"
-	}
+"HudSpeedometer"
+{
+		"ControlName"		"CTFHudSpeedometer"
+		"fieldName"			"HudSpeedometer"
+		"xpos"				"0"
+		"ypos"				"250"
+		"wide"				"80"
+		"tall"				"16"
+		"visible"			"1"
+		"enabled"			"1"
+}
 	
 	"HudWave2Status"
 	{
@@ -1581,6 +1581,116 @@
 	"enabled"		"1"
 	}
 
+	"HudScope"
+	{
+		"fieldName" "HudScope"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "10"
+		"wide" "0"
+		"tall" "0"
+	}
+	"HudScopeCharge"
+	{
+		"fieldName" "HudScopeCharge"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "30"
+		"wide" "0"
+		"tall" "0"
+	}
+	"AchievementNotificationPanel"
+	{
+		"fieldName" "AchievementNotificationPanel"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "50"
+		"wide" "0"
+		"tall" "0"
+	}
+	"CriticalPanel"
+	{
+		"fieldName" "CriticalPanel"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "70"
+		"wide" "0"
+		"tall" "0"
+	}
+	"MatchSummary"
+	{
+		"fieldName" "MatchSummary"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "110"
+		"wide" "0"
+		"tall" "0"
+	}
+	"ItemQuickSwitchPanel"
+	{
+		"fieldName" "ItemQuickSwitchPanel"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "150"
+		"wide" "0"
+		"tall" "0"
+	}
+	"HudTrainingMsg"
+	{
+		"fieldName" "HudTrainingMsg"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "170"
+		"wide" "0"
+		"tall" "0"
+	}
+"HudHealth"
+{
+		"fieldName"		"HudHealth"
+		"visible"		"1"
+		"enabled"		"1"
+		"xpos"			"0"
+		"ypos"                "420"
+		"wide"			"200"
+		"tall"			"60"
+}
+	"DamageIndicator"
+	{
+		"fieldName" "DamageIndicator"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "250"
+		"wide" "0"
+		"tall" "0"
+	}
+	"HudChargeMeter"
+	{
+		"fieldName" "HudChargeMeter"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "270"
+		"wide" "0"
+		"tall" "0"
+	}
+	"HudCrosshair"
+	{
+		"fieldName" "HudCrosshair"
+		"visible" "1"
+		"enabled" "1"
+		"xpos" "0"
+		"ypos" "290"
+		"wide" "0"
+		"tall" "0"
+	}
 }
 
 

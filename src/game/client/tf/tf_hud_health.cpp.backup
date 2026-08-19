@@ -3,7 +3,6 @@
 // Purpose: Implementation of CHudHealth class.
 //
 //=============================================================================//
-
 #include "cbase.h"
 #include "hud.h"
 #include "hud_macros.h"
@@ -28,31 +27,34 @@ using namespace vgui;
 //
 // TF Health Hud
 //
-//=============================================================================
 class CHudHealth : public CHudElement, public CHudNumericDisplay
 {
-public:
 	DECLARE_CLASS_SIMPLE( CHudHealth, CHudNumericDisplay );
 
 public:
+
 	CHudHealth( const char *pElementName );
 	virtual void Init( void );
 	virtual void ApplySchemeSettings( IScheme *scheme );
 	virtual void Reset( void );
 
-	virtual void OnThink( );
+	virtual void OnThink();
 
-	virtual bool ShouldDraw();
+	virtual bool ShouldDraw();	
 	virtual void Paint( void );
 
 private:
-	int	m_nHealth;
 
-	// Position of the numbers (set via hudlayout.res)
+	int				m_nHealth;
+
+	CHudTexture		*m_pHealthIcon;
+	float			m_flHealthIconWidth;
+	float			m_flHealthIconHeight;
+
 	CPanelAnimationVar( vgui::HFont, m_hHealthFont, "NumberFont", "HudNumbers" );
 	CPanelAnimationVarAliasType( float, health_xpos, "digit_xpos", "50", "proportional_float" );
 	CPanelAnimationVarAliasType( float, health_ypos, "digit_ypos", "2", "proportional_float" );
-};
+};	
 
 DECLARE_HUDELEMENT( CHudHealth );
 
@@ -63,14 +65,17 @@ CHudHealth::CHudHealth( const char *pElementName ) : CHudElement( pElementName )
 {
 	m_nHealth = 0;
 
-	// Hide when player is dead; let engine control health visibility via hud_drawhealth
-	SetHiddenBits( HIDEHUD_PLAYERDEAD );
+	m_pHealthIcon = NULL;
+	m_flHealthIconHeight = 0;
+	m_flHealthIconWidth	= 0;
+
+	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudHealth::Init( void )
+void CHudHealth::Init()
 {
 	C_TFPlayer *pTFPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
 	if ( !pTFPlayer )
@@ -87,12 +92,25 @@ void CHudHealth::ApplySchemeSettings( IScheme *scheme )
 {
 	// Fall back to base.
 	BaseClass::ApplySchemeSettings( scheme );
+
+	// Setup the health icon.
+	if( !m_pHealthIcon )
+	{
+		m_pHealthIcon = gHUD.GetIcon( "health_icon" );
+	}	
+
+	if( m_pHealthIcon )
+	{
+		m_flHealthIconHeight = GetTall() - YRES( 2 );
+		float flScale = m_flHealthIconHeight / static_cast<float>( m_pHealthIcon->Height() );
+		m_flHealthIconWidth = flScale * static_cast<float>( m_pHealthIcon->Width() );
+	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: reset health to normal color at round restart
 //-----------------------------------------------------------------------------
-void CHudHealth::Reset( void )
+void CHudHealth::Reset()
 {
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HealthRestored" );
 }
@@ -100,7 +118,7 @@ void CHudHealth::Reset( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudHealth::OnThink( )
+void CHudHealth::OnThink()
 {
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	if ( !pPlayer )
@@ -130,19 +148,18 @@ void CHudHealth::OnThink( )
 	}
 
 	m_nHealth = nHealth;
-	SetDisplayValue( m_nHealth );
+//	SetDisplayValue( m_nHealth );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CHudHealth::ShouldDraw( void )
+bool CHudHealth::ShouldDraw()
 {
 	C_TFPlayer *pTFPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
 	if ( !pTFPlayer )
 		return false;
 
-	// Don't draw if we're an observer (e.g., waiting to respawn or spectating)
 	return !pTFPlayer->IsObserver();
 }
 
@@ -151,9 +168,6 @@ bool CHudHealth::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 void CHudHealth::Paint( void )
 {
-	// Debug: see if we are painting
-	// Msg( "CHudHealth Paint\n" );
-
 	C_TFPlayer *pTFPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
 	if ( !pTFPlayer )
 		return;
@@ -162,12 +176,138 @@ void CHudHealth::Paint( void )
 	Color teamColor;
 	pTFPlayer->GetTeamColor( teamColor );
 
-	// Set the text color to the team color.
-	vgui::surface()->DrawSetTextColor( teamColor );
+	// Draw the health icon.
+	if( m_pHealthIcon )
+	{
+		m_pHealthIcon->DrawSelf( 0, 2, m_flHealthIconWidth, m_flHealthIconHeight, teamColor );
+	}
 
-	// Draw the number.
+	// Primary grenade count.
+	vgui::surface()->DrawSetTextColor( teamColor );
 	PaintNumbers( m_hHealthFont, health_xpos, health_ypos, m_nHealth );
 
-	// Draw the label (if any) - we don't have a label for health, but the base class might.
 	PaintLabel();
+}
+
+//=============================================================================
+//
+// TF Armor Hud
+//
+class CHudArmor : public CHudElement, public CHudNumericDisplay
+{
+public:
+
+	DECLARE_CLASS_SIMPLE( CHudArmor, CHudNumericDisplay );
+
+	CHudArmor( const char *pName );
+	virtual void Init();
+	virtual void ApplySchemeSettings( IScheme *scheme );
+
+	virtual void OnThink();
+
+	virtual bool ShouldDraw();	
+	virtual void Paint();
+
+private:
+
+	int				m_nArmor;
+
+	CHudTexture		*m_pArmorIcon;
+	float			m_flArmorIconWidth;
+	float			m_flArmorIconHeight;
+};
+
+
+DECLARE_HUDELEMENT( CHudArmor );
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor.
+//-----------------------------------------------------------------------------
+CHudArmor::CHudArmor( const char *pName ) : CHudNumericDisplay( NULL, "HudArmor" ), CHudElement( pName )
+{
+	m_nArmor = 0;
+
+	m_pArmorIcon = NULL;
+	m_flArmorIconHeight = 0;
+	m_flArmorIconWidth = 0;
+
+	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CHudArmor::Init()
+{
+	C_TFPlayer *pTFPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( !pTFPlayer )
+		return;
+
+	m_nArmor = pTFPlayer->ArmorValue();
+	SetDisplayValue( m_nArmor );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CHudArmor::ApplySchemeSettings( IScheme *scheme )
+{
+	// Fall back to base.
+	BaseClass::ApplySchemeSettings( scheme );
+
+	// Setup the health icon.
+	if( !m_pArmorIcon )
+	{
+		m_pArmorIcon = gHUD.GetIcon( "shield_bright" );
+	}	
+
+	if( m_pArmorIcon )
+	{
+		m_flArmorIconHeight = GetTall() - YRES( 2 );
+		float flScale = m_flArmorIconHeight / static_cast<float>( m_pArmorIcon->Height() );
+		m_flArmorIconWidth = flScale * static_cast<float>( m_pArmorIcon->Width() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CHudArmor::OnThink()
+{
+	C_TFPlayer *pTFPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( !pTFPlayer )
+		return;
+
+	m_nArmor = pTFPlayer->ArmorValue();
+	SetDisplayValue( m_nArmor );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CHudArmor::ShouldDraw()
+{
+	C_TFPlayer *pTFPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( !pTFPlayer )
+		return false;
+
+	// Running the experiment - no armor!
+	return ( pTFPlayer->ArmorValue() != 0 );
+
+	return !pTFPlayer->IsObserver();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CHudArmor::Paint()
+{
+	// Draw the armor icon.
+	if( m_pArmorIcon )
+	{
+		m_pArmorIcon->DrawSelf( 0, 2, m_flArmorIconWidth, m_flArmorIconHeight, GetFgColor() );
+	}
+
+	// Base class paint.
+	BaseClass::Paint();
 }

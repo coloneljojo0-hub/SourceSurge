@@ -906,7 +906,11 @@ void CPvPRankPanel::SetMatchGroup( ETFMatchGroup eMatchGroup )
 			m_bShowRating = m_pMatchDesc->GetCurrentDisplayRating() != k_nMMRating_Invalid;
 		}
 
-		Assert( m_pProgressionDesc );
+		// If we don't have a progression descriptor, we cannot proceed.
+		if ( !m_pProgressionDesc )
+		{
+			return;
+		}
 
 		// Many things needs to change
 		InvalidateLayout( true, true );

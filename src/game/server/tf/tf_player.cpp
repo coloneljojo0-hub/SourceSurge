@@ -14225,9 +14225,9 @@ void CTFPlayer::StateThinkOBSERVER()
 	Assert( m_takedamage == DAMAGE_NO );
 	Assert( IsSolidFlagSet( FSOLID_NOT_SOLID ) );
 
-	// Must be dead.
-	Assert( m_lifeState == LIFE_DEAD );
-	Assert( pl.deadflag );
+	// Must be dead (or dying).
+		Assert( m_lifeState == LIFE_DEAD || m_lifeState == LIFE_DYING );
+		Assert( pl.deadflag );
 
 }
 
