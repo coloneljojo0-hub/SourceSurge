@@ -22900,27 +22900,61 @@ CON_COMMAND_F(tf_wavemode_ready, "Toggle your ready state for Wavemode.", FCVAR_
 
 CON_COMMAND_F(tf_wavemode_retry, "Reset Wavemode after a game over and trigger a map reload.", FCVAR_GAMEDLL)
 {
-	CTFGameRules *pTFRules = TFGameRules();
-	if (!pTFRules)
-		return;
+    CTFGameRules *pTFRules = TFGameRules();
+    if (!pTFRules)
+        return;
 
-	// Capture current difficulty before stopping.
-	const char *pszDiff = "hard";
-	int nDiff = pTFRules->WaveMode_GetDifficultyForHUD();
-	if (nDiff == 1)
-		pszDiff = "harder";
-	else if (nDiff == 2)
-		pszDiff = "hardest";
-	else if (nDiff == 3)
-		pszDiff = "nohit";
+    // Stop the wave and kick all bots.
+    pTFRules->Wave2_Stop();
 
-	// Stop the wave and kick all bots.
-	pTFRules->Wave2_Stop();
+    // Move all human players to RED team and respawn them.
+    CUtlVector<CTFPlayer*> playerVector;
+    CollectPlayers(&playerVector);
+    FOR_EACH_VEC(playerVector, i)
+    {
+        CTFPlayer* pPlayer = playerVector[i];
+        if (!pPlayer || pPlayer->IsBot() || pPlayer->IsFakeClient())
+            continue;
 
-	// Set pending diff — player_spawn will see this and trigger Wave2_Start.
-	tf_wavemode_pending_diff.SetValue(pszDiff);
+        // Move to RED team if not already there
+        if (pPlayer->GetTeamNumber() != TF_TEAM_RED)
+        {
+            pPlayer->ChangeTeam(TF_TEAM_RED);
+        }
 
-	Msg("[WaveMode] Retry: difficulty=%s\n", pszDiff);
+        // Force respawn
+        pPlayer->ForceRespawn();
+    }
+
+    // Update RED team count via public method
+    int nRedCount = 0;
+    FOR_EACH_VEC(playerVector, i)
+    {
+        CTFPlayer* pPlayer = playerVector[i];
+        if (!pPlayer || pPlayer->IsBot() || pPlayer->IsFakeClient())
+            continue;
+
+        if (pPlayer->GetTeamNumber() == TF_TEAM_RED)
+            nRedCount++;
+    }
+    pTFRules->WaveMode_SetRedTeamCount(nRedCount);
+
+    // Get the current difficulty for the wait-and-start command.
+    const char *pszDiff = "hard";
+    int nDiff = pTFRules->WaveMode_GetDifficultyForHUD();
+    if (nDiff == 1)
+        pszDiff = "harder";
+    else if (nDiff == 2)
+        pszDiff = "hardest";
+    else if (nDiff == 3)
+        pszDiff = "nohit";
+
+    Msg("[WaveMode] Retry: difficulty=%s\n", pszDiff);
+
+    // Issue a server command to wait 60 seconds then start the wave with the given difficulty.
+    char szCmd[512];
+    Q_snprintf(szCmd, sizeof(szCmd), "wait 60; tf_wavemode_start %s\n", pszDiff);
+    engine->ServerCommand(szCmd);
 }
 
 CON_COMMAND_F(tf_wavemode_start, "Start Wavemode - a custom infinite-survival gamemode. Usage: tf_wavemode_start <hard|harder|hardest|nohit>", FCVAR_GAMEDLL | FCVAR_CHEAT)
@@ -22995,29 +23029,24 @@ void CTFGameRules::Wave2_Start(int nDifficulty)
 
 void CTFGameRules::Wave2_Stop(void)
 {
-	m_bWave2Active = false;
-	m_bWave2InCooldown = false;
-	m_nWave2CurrentWave.Set(0);
-	m_nWave2BotsAliveCount.Set(0);
-	m_nWaveModeRedTeamCount_Net.Set(0);
+    m_bWave2Active = false;
+            m_bWave2Active_Net.Set(false);
+            m_bWave2InCooldown = false;
+            m_nWave2CurrentWave.Set(0);
+            m_nWave2BotsAliveCount.Set(0);
+            m_nWaveModeRedTeamCount_Net.Set(0);
 
-	FOR_EACH_VEC(m_hWave2Bots, i)
-	{
-		CTFBot* pBot = m_hWave2Bots[i];
-		if (pBot)
-		{
-			engine->ServerCommand(UTIL_VarArgs("kickid %d\n", pBot->GetUserID()));
-		}
-	}
-	m_hWave2Bots.RemoveAll();
+            engine->ServerCommand("tf_bot_kick all\n");
 
-	m_nWave2CurrentWave = 0;
-	m_nWave2BotsAliveCount = 0;
+            m_hWave2Bots.RemoveAll();
 
-	// Reset game-over state so the HUD hides the game-over panel on retry.
-	m_bWaveModeGameOver_Net.Set(false);
+            m_nWave2CurrentWave = 0;
+            m_nWave2BotsAliveCount = 0;
 
-	Msg("Wave2: stopped, all bots removed.\n");
+            // Reset game-over state so the HUD hides the game-over panel on retry.
+            m_bWaveModeGameOver_Net.Set(false);
+
+            Msg("Wave2: stopped, all bots removed.\\n");
 }
 
 void CTFGameRules::Wave2_GetCompositionForWave(int nWave, int& nSnipers, int& nSpies)

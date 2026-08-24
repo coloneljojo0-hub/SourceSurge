@@ -366,13 +366,12 @@ void CHudWaveModeGameOver::OnKeyCodePressed(vgui::KeyCode code)
 		else if (nDiff == 3)
 			pszDiff = "nohit";
 
-		// tf_wavemode_retry (server): saves diff, resets state, kicks bots.
-		// map: triggers full reload — player_spawn will see the pending diff and activate WaveMode.
-		// tf_wavemode_start <diff>: explicitly starts the wave with the given difficulty.
-		char szCmd[512];
-		Q_snprintf(szCmd, sizeof(szCmd),
-			"tf_wavemode_retry; map %s; tf_wavemode_start %s",
-			szMapName, pszDiff);
+				// tf_wavemode_retry (server): saves diff, resets state, kicks bots.
+							// Wait for map to load before starting wave to ensure proper initialization.
+							char szCmd[512];
+							Q_snprintf(szCmd, sizeof(szCmd),
+									"tf_wavemode_retry; wait 60; tf_wavemode_start %s",
+									pszDiff);
 		engine->ClientCmd_Unrestricted(szCmd);
 		SetVisible(false);
 	}
